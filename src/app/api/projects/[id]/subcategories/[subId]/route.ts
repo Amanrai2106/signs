@@ -11,10 +11,11 @@ function isAuthed(req: Request) {
   });
 }
 
-export async function PUT(req: Request, { params }: { params: { id: string; subId: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string; subId: string }> }) {
   try {
+    const resolvedParams = await params;
     if (!isAuthed(req)) return NextResponse.json({ ok: false }, { status: 401 });
-    const subId = Number(params.subId);
+    const subId = Number(resolvedParams.subId);
     const body = await req.json();
     const { key, title, image } = body ?? {};
     const updated = await (prisma as any)["projectSubCategory"].update({
@@ -27,10 +28,11 @@ export async function PUT(req: Request, { params }: { params: { id: string; subI
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string; subId: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string; subId: string }> }) {
   try {
+    const resolvedParams = await params;
     if (!isAuthed(req)) return NextResponse.json({ ok: false }, { status: 401 });
-    const subId = Number(params.subId);
+    const subId = Number(resolvedParams.subId);
     await (prisma as any)["projectSubCategory"].delete({ where: { id: subId } });
     return NextResponse.json({ ok: true });
   } catch {

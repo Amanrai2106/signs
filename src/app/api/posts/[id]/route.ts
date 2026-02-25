@@ -14,7 +14,7 @@ function isAuthed(req: Request) {
   });
 }
 
-export async function GET(_: Request, { params }: { params: any }) {
+export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const item = await (prisma as any)["post"].findUnique({ where: { id } });
@@ -25,7 +25,7 @@ export async function GET(_: Request, { params }: { params: any }) {
   }
 }
 
-export async function PUT(req: Request, { params }: { params: any }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     if (!isAuthed(req)) return NextResponse.json({ ok: false }, { status: 401 });
     const { id } = await params;
@@ -53,7 +53,7 @@ export async function PUT(req: Request, { params }: { params: any }) {
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: any }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     if (!isAuthed(req)) return NextResponse.json({ ok: false }, { status: 401 });
     

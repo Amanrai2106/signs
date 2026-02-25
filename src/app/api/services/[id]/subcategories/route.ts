@@ -11,10 +11,11 @@ function isAuthed(req: Request) {
   });
 }
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const resolvedParams = await params;
     if (!isAuthed(req)) return NextResponse.json({ ok: false }, { status: 401 });
-    const id = Number(params.id);
+    const id = Number(resolvedParams.id);
     const body = await req.json();
     const { key, title, image } = body ?? {};
     if (!key || !title || !image) return NextResponse.json({ ok: false, error: "Missing fields" }, { status: 400 });

@@ -11,14 +11,15 @@ function isAuthed(req: Request) {
   });
 }
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const resolvedParams = await params;
     if (!isAuthed(req)) return NextResponse.json({ ok: false }, { status: 401 });
     const body = await req.json();
     const { key, title, image } = body ?? {};
     if (!key || !title || !image) return NextResponse.json({ ok: false, error: "Missing fields" }, { status: 400 });
     const created = await (prisma as any)["projectSubCategory"].create({
-      data: { key, title, image, projectId: params.id },
+      data: { key, title, image, projectId: resolvedParams.id },
     });
     return NextResponse.json({ ok: true, item: created });
   } catch {
