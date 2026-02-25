@@ -46,7 +46,7 @@ const Footer = ({ hideContactCta = false }: { hideContactCta?: boolean }) => {
                 whileInView={{ opacity: 1, y: 0 }}
                 className="mb-10 relative h-20 w-40"
               >
-                 <Image src="/logo.png" alt="Signsol Logo" fill className="object-contain brightness-0" />
+                 <Image src="/logo-purple.png" alt="Signsol Logo" fill className="object-contain" />
               </motion.div>
               <motion.h2 
                 initial={{ opacity: 0, y: 20 }}
@@ -77,6 +77,7 @@ const Footer = ({ hideContactCta = false }: { hideContactCta?: boolean }) => {
                     {[
                       { name: "Home", href: "/#home" },
                       { name: "Services", href: "/services" },
+                      { name: "News & Ideas", href: "/news" },
                       { name: "About", href: "/about" },
                       { name: "Work", href: "/projects" },
                       { name: "Contact", href: getContactHref() }
@@ -151,6 +152,7 @@ const Footer = ({ hideContactCta = false }: { hideContactCta?: boolean }) => {
                     {[
                       { name: "Home", href: "/#home" },
                       { name: "Services", href: "/services" },
+                      { name: "News & Ideas", href: "/news" },
                       { name: "About", href: "/#about-grid" },
                       { name: "Work", href: "/projects" },
                       { name: "Contact", href: getContactHref() }

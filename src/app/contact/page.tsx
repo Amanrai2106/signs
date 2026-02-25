@@ -21,21 +21,61 @@ const Contact = () => {
     message: "",
   });
 
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [dynamicCategories, setDynamicCategories] = useState<{ [key: string]: string[] }>({
+    "Project": ["Residential", "Commercial", "Plotting", "Office", "Educational", "Retail"],
+    "Services": ["Wayfinding Design", "Experiential Design", "Art Installations"],
+    "Other": ["Career", "Partnership", "General Inquiry"]
+  });
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [projRes, svcRes] = await Promise.all([
+          fetch("/api/projects", { cache: "no-store" }),
+          fetch("/api/services", { cache: "no-store" })
+        ]);
+        
+        const projData = await projRes.json();
+        const svcData = await svcRes.json();
+
+        const newCats = { ...dynamicCategories };
+        
+        if (projRes.ok && projData?.ok && Array.isArray(projData.items)) {
+          newCats["Project"] = projData.items.map((i: any) => i.title);
+        }
+        
+        if (svcRes.ok && svcData?.ok && Array.isArray(svcData.items)) {
+          newCats["Services"] = svcData.items.map((i: any) => i.title);
+        }
+
+        setDynamicCategories(newCats);
+      } catch (err) {
+        console.error("Failed to load dynamic categories", err);
+      }
+    };
+    loadData();
+  }, []);
+
   const normalizeSubcategory = (category: string | null, sub: string | null) => {
     if (!category || !sub) return null;
-    const s = sub.trim();
+    const s = sub.trim().toLowerCase();
+    
+    const availableSubs = dynamicCategories[category] || [];
+    const match = availableSubs.find(as => as.toLowerCase() === s);
+    if (match) return match;
+
+    // Fallback normalization
     if (category === "Project") {
-      return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+      return s.charAt(0).toUpperCase() + s.slice(1);
     }
+    
     if (category === "Services") {
-      const upper = s.toUpperCase();
-      if (upper.includes("INDOOR") || upper.includes("OUTDOOR")) return "Signage";
-      if (upper.includes("BRAND")) return "Branding";
-      if (upper.includes("WAYFIND")) return "Wayfinding";
-      if (upper.includes("DESIGN")) return "Design";
-      if (upper.includes("CONSULT")) return "Consultation";
-      return null;
+      if (s.includes("wayfind")) return "Wayfinding Design";
+      if (s.includes("experiential")) return "Experiential Design";
+      if (s.includes("art")) return "Art Installations";
     }
+    
     return null;
   };
 
@@ -48,15 +88,7 @@ const Contact = () => {
       category: categoryParam || prev.category,
       subCategory: mappedSub ?? prev.subCategory,
     }));
-  }, [searchParams]);
-
-  const [focusedField, setFocusedField] = useState<string | null>(null);
-
-  const categories = {
-    "Project": ["Residential", "Commercial", "Plotting", "Office", "Educational", "Retail"],
-    "Services": ["Signage", "Branding", "Wayfinding", "Design", "Consultation"],
-    "Other": ["Career", "Partnership", "General Inquiry"]
-  };
+  }, [searchParams, dynamicCategories]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -86,8 +118,8 @@ const Contact = () => {
         subject: "",
         message: "",
       });
-    } catch {
-      alert("Network error. Please try again.");
+    } catch (err: any) {
+      alert(`Error: ${err.message || "Network error. Please try again."}`);
     }
   };
 
@@ -115,7 +147,7 @@ const Contact = () => {
   return (
     <main className="min-h-screen text-black relative overflow-hidden selection:bg-orange-500/30 font-sans">
       {/* Ambient Background Effects */}
-      <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
           <div className="absolute top-[-10%] right-[-5%] w-[50vw] h-[50vw] bg-purple-200/40 rounded-full blur-[120px] opacity-50" />
           <div className="absolute bottom-[-10%] left-[-10%] w-[40vw] h-[40vw] bg-blue-200/30 rounded-full blur-[100px] opacity-30" />
       </div>
@@ -271,7 +303,7 @@ const Contact = () => {
                                 required
                              >
                                 <option value="" disabled className="bg-white text-gray-500"></option>
-                                {Object.keys(categories).map((cat) => (
+                                {Object.keys(dynamicCategories).map((cat) => (
                                     <option key={cat} value={cat} className="bg-white text-black">{cat}</option>
                                 ))}
                              </select>
@@ -290,7 +322,7 @@ const Contact = () => {
                                 required
                              >
                                 <option value="" disabled className="bg-white text-gray-500"></option>
-                                {formData.category && categories[formData.category as keyof typeof categories].map((sub) => (
+                                {formData.category && dynamicCategories[formData.category]?.map((sub) => (
                                     <option key={sub} value={sub} className="bg-white text-black">{sub}</option>
                                 ))}
                              </select>

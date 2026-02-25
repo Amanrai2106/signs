@@ -1,41 +1,201 @@
-'use client';
+"use client";
 
-import React, { use, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import Nav from '@/components/Nav';
-import Footer from '@/components/Footer';
-import { services } from '@/data/services';
-import { projects } from '@/data/projects';
-import { posts } from '@/data/posts';
-import { notFound } from 'next/navigation';
-import { Button } from '@/components/ui/Button';
-import { ArrowUpRight, ArrowRight } from 'lucide-react';
-import TransitionLink from '@/components/TransitionLink';
-import Image from 'next/image';
+import React, { use, useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import Nav from "@/components/Nav";
+import Footer from "@/components/Footer";
+import GetInTouch from "@/components/GetInTouch";
+import { Button } from "@/components/ui/Button";
+import { ArrowUpRight, ArrowRight } from "lucide-react";
+import TransitionLink from "@/components/TransitionLink";
+import Image from "next/image";
+import { services as staticServices } from "@/data/services";
+
+type ServiceSubCategory = { id: string; title: string; image: string };
+
+type Service = {
+  id: number;
+  title: string;
+  description: string;
+  details?: string[];
+  subCategories?: ServiceSubCategory[];
+  relatedProjectIds?: string[];
+};
+
+type Project = {
+  id: string;
+  title: string;
+  description: string;
+  src: string;
+};
+
+type Post = {
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  categoryId: string;
+  subCategoryId: string;
+  type: "project" | "service";
+};
 
 export default function ServicePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const service = services.find((s) => s.id === Number(id));
+  const [service, setService] = useState<Service | null>(null);
+  const [relatedProjects, setRelatedProjects] = useState<Project[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  if (!service) {
-    notFound();
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setLoading(true);
+        const [serviceRes, postsRes] = await Promise.all([
+          fetch(`/api/services/${id}`, { cache: "no-store" }),
+          fetch("/api/posts", { cache: "no-store" }),
+        ]);
+        const serviceData = await serviceRes.json();
+        const postsData = await postsRes.json();
+
+        const safeParseArray = (val: any): any[] | undefined => {
+          if (!val) return undefined;
+          try {
+            const parsed = typeof val === "string" ? JSON.parse(val) : val;
+            return Array.isArray(parsed) ? parsed : undefined;
+          } catch {
+            return undefined;
+          }
+        };
+
+        let sourceService: any | null = null;
+        if (serviceRes.ok && serviceData?.ok && serviceData.item) {
+          sourceService = serviceData.item;
+        } else {
+          const numericId = Number(id);
+          const fallback = staticServices.find((svc) => svc.id === numericId);
+          if (fallback) {
+            sourceService = {
+              id: fallback.id,
+              title: fallback.title,
+              description: fallback.description,
+              details: fallback.details ?? null,
+              relatedProjectIds: fallback.relatedProjectIds ?? null,
+              subCategories: fallback.subCategories || [],
+            };
+          }
+        }
+
+        if (!sourceService) {
+          setError("Service not found");
+          setLoading(false);
+          return;
+        }
+
+        const s = sourceService;
+        const mappedService: Service = {
+          id: s.id,
+          title: s.title,
+          description: s.description,
+          details: safeParseArray(s.details),
+          subCategories: s.subCategories || [],
+          relatedProjectIds: safeParseArray(s.relatedProjectIds) as string[] | undefined,
+        };
+        setService(mappedService);
+
+        if (postsRes.ok && postsData?.ok && Array.isArray(postsData.items)) {
+          setPosts(postsData.items);
+        } else {
+          setPosts([]);
+        }
+
+        if (mappedService.relatedProjectIds && mappedService.relatedProjectIds.length) {
+          const projectsRes = await fetch("/api/projects", { cache: "no-store" });
+          const projectsData = await projectsRes.json();
+          if (projectsRes.ok && projectsData?.ok && Array.isArray(projectsData.items)) {
+            const mappedProjects: Project[] = projectsData.items
+              .filter((p: any) => mappedService.relatedProjectIds?.includes(p.id))
+              .map((p: any) => ({
+                id: p.id,
+                title: p.title,
+                description: p.description,
+                src: p.src,
+              }));
+            setRelatedProjects(mappedProjects);
+          }
+        } else {
+          setRelatedProjects([]);
+        }
+
+        setError("");
+      } catch {
+        setError("Failed to load service");
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-500">Loading service...</p>
+      </div>
+    );
   }
 
-  // Related Projects based on mapping
-  const relatedProjects = projects.filter(p => 
-    (service as any).relatedProjectIds?.includes(p.id)
-  );
+  if (error || !service) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center">
+        <Nav />
+        <p className="mt-10 text-gray-500">Service not found.</p>
+      </div>
+    );
+  }
 
-  // State for filtering
-  const [activeFilter, setActiveFilter] = useState('all');
+  const servicePosts = posts.filter((p) => p.type === "service" && p.categoryId === String(service.id));
 
-  // Filter posts belonging to this service
-  const servicePosts = posts.filter(p => p.categoryId === id);
+  const getFilterSubcategories = (filterId: string): string[] | null => {
+    if (filterId === "all") return null;
 
-  // Apply subcategory filter
-  const filteredPosts = activeFilter === 'all' 
-    ? servicePosts 
-    : servicePosts.filter(p => p.subCategoryId === activeFilter);
+    if (service.id === 1) {
+      if (filterId === "residential") return ["lobby", "ada"];
+      if (filterId === "commercial") return ["lobby", "wayfinding"];
+      if (filterId === "plotting") return ["wayfinding"];
+      if (filterId === "office") return ["lobby", "wayfinding", "ada"];
+      if (filterId === "educational") return ["wayfinding", "ada"];
+      if (filterId === "retail") return ["lobby"];
+    }
+
+    if (service.id === 2) {
+      if (filterId === "residential") return ["office-branding"];
+      if (filterId === "commercial") return ["retail-displays", "office-branding"];
+      if (filterId === "plotting") return ["exhibits"];
+      if (filterId === "office") return ["office-branding"];
+      if (filterId === "educational") return ["exhibits"];
+      if (filterId === "retail") return ["retail-displays"];
+    }
+
+    if (service.id === 3) {
+      if (filterId === "residential") return ["murals"];
+      if (filterId === "commercial") return ["monument", "sculptures"];
+      if (filterId === "plotting") return ["monument"];
+      if (filterId === "office") return ["sculptures"];
+      if (filterId === "educational") return ["murals"];
+      if (filterId === "retail") return ["murals", "sculptures"];
+    }
+
+    return null;
+  };
+
+  const activeSubcategories = getFilterSubcategories(activeFilter);
+
+  const filteredPosts =
+    activeSubcategories && activeSubcategories.length > 0
+      ? servicePosts.filter((p) => activeSubcategories.includes(p.subCategoryId))
+      : servicePosts;
 
   const layoutSpans = [
     "lg:col-span-2 lg:row-span-2",
@@ -54,7 +214,7 @@ export default function ServicePage({ params }: { params: Promise<{ id: string }
       <Nav />
       
       <main className="relative z-10 pt-32 pb-20">
-        <div className="w-full mx-auto px-6 md:px-12">
+        <div className="w-full max-w-[1600px] mx-auto px-6 md:px-12 bg-white rounded-3xl shadow-sm">
           
           {/* Header & Filter Section */}
           <div className="mb-16">
@@ -66,31 +226,29 @@ export default function ServicePage({ params }: { params: Promise<{ id: string }
               {service.title}
             </motion.h1>
 
-            {/* Filter Pills */}
-            <div className="flex flex-wrap gap-3 md:gap-4 pb-4 border-b border-gray-200">
+            {/* Category Selection Pills */}
+            <div className="flex flex-wrap gap-3 md:gap-4 pb-4 border-b border-gray-200 justify-center md:justify-start">
+              {[
+                { id: "all", label: "All" },
+                { id: "residential", label: "Residential" },
+                { id: "commercial", label: "Commercial" },
+                { id: "plotting", label: "Plotting" },
+                { id: "office", label: "Office" },
+                { id: "educational", label: "Educational" },
+                { id: "retail", label: "Retail" },
+              ].map((item) => (
                 <button
-                    onClick={() => setActiveFilter('all')}
-                    className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 border ${
-                        activeFilter === 'all' 
-                        ? 'bg-black text-white border-black' 
-                        : 'bg-transparent text-gray-500 border-gray-300 hover:border-black hover:text-black'
-                    }`}
+                  key={item.id}
+                  onClick={() => setActiveFilter(item.id)}
+                  className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 border ${
+                    activeFilter === item.id
+                      ? "bg-black text-white border-black"
+                      : "bg-transparent text-gray-500 border-gray-300 hover:border-black hover:text-black"
+                  }`}
                 >
-                    All
+                  {item.label}
                 </button>
-                {service.subCategories?.map((sub) => (
-                    <button
-                        key={sub.id}
-                        onClick={() => setActiveFilter(sub.id)}
-                        className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 border ${
-                            activeFilter === sub.id 
-                            ? 'bg-black text-white border-black' 
-                            : 'bg-transparent text-gray-500 border-gray-300 hover:border-black hover:text-black'
-                        }`}
-                    >
-                        {sub.title}
-                    </button>
-                ))}
+              ))}
             </div>
           </div>
 
@@ -219,33 +377,11 @@ export default function ServicePage({ params }: { params: Promise<{ id: string }
             </section>
           )}
 
-          {/* CTA Section */}
-          <section className="mt-32 relative overflow-hidden rounded-3xl bg-white border border-gray-200 p-12 md:p-24 text-center shadow-xl shadow-gray-200/50">
-            <div className="relative z-10 max-w-3xl mx-auto">
-                <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight text-black">
-                    Ready to transform your space?
-                </h2>
-                <p className="text-xl text-gray-600 mb-10 leading-relaxed">
-                    Let&apos;s collaborate to bring the vision of {service.title.toLowerCase()} to life with precision and creativity.
-                </p>
-                <Button 
-                    href="/contact"
-                    className="h-14 px-8 rounded-full text-base"
-                    variant="primary"
-                >
-                    Get in Touch
-                </Button>
-            </div>
-            
-            {/* Background decorative elements */}
-            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40">
-                <div className="absolute top-[-50%] left-[-20%] w-[80%] h-[80%] bg-orange-100 rounded-full blur-[100px]" />
-                <div className="absolute bottom-[-50%] right-[-20%] w-[80%] h-[80%] bg-blue-100 rounded-full blur-[100px]" />
-            </div>
-          </section>
+          
 
         </div>
       </main>
+      <GetInTouch />
       <Footer />
     </div>
   );

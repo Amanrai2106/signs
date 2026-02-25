@@ -8,11 +8,7 @@ export default function AdminHome() {
       <div className="w-full max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-black">Admin Dashboard</h1>
-          <form
-            action={async () => {
-              "use server";
-            }}
-          >
+          <div>
             <div className="flex gap-3">
               <button
                 type="button"
@@ -35,28 +31,24 @@ export default function AdminHome() {
                 Logout
               </button>
             </div>
-          </form>
+          </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Link href="/admin/contacts" className="group rounded-2xl border border-black/10 bg-white p-6 hover:shadow-lg transition-all">
             <h2 className="text-xl font-semibold mb-2">Contact Submissions</h2>
-            <p className="text-gray-600 text-sm">View latest messages</p>
-          </Link>
-          <Link href="/admin/services" className="group rounded-2xl border border-black/10 bg-white p-6 hover:shadow-lg transition-all">
-            <h2 className="text-xl font-semibold mb-2">Services</h2>
-            <p className="text-gray-600 text-sm">Manage services and subcategories</p>
-          </Link>
-          <Link href="/admin/projects" className="group rounded-2xl border border-black/10 bg-white p-6 hover:shadow-lg transition-all">
-            <h2 className="text-xl font-semibold mb-2">Projects</h2>
-            <p className="text-gray-600 text-sm">Manage project categories</p>
+            <p className="text-gray-600 text-sm">View latest messages from users</p>
           </Link>
           <Link href="/admin/posts" className="group rounded-2xl border border-black/10 bg-white p-6 hover:shadow-lg transition-all">
             <h2 className="text-xl font-semibold mb-2">Posts</h2>
-            <p className="text-gray-600 text-sm">Manage project/service posts</p>
+            <p className="text-gray-600 text-sm">Manage projects and service posts</p>
           </Link>
-          <a href="/services" className="group rounded-2xl border border-black/10 bg-white p-6 hover:shadow-lg transition-all">
-            <h2 className="text-xl font-semibold mb-2">Public Site</h2>
-            <p className="text-gray-600 text-sm">Open website</p>
+          <Link href="/admin/news" className="group rounded-2xl border border-black/10 bg-white p-6 hover:shadow-lg transition-all">
+            <h2 className="text-xl font-semibold mb-2">News & Ideas</h2>
+            <p className="text-gray-600 text-sm">Manage latest news, articles and creative ideas</p>
+          </Link>
+          <a href="/" target="_blank" className="md:col-span-3 group rounded-2xl border border-black/10 bg-gray-50 p-6 hover:shadow-lg transition-all text-center">
+            <h2 className="text-xl font-semibold mb-1">View Public Website</h2>
+            <p className="text-gray-600 text-sm">Check live changes on the site</p>
           </a>
         </div>
       </div>

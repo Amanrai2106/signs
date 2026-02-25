@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import nodemailer from "nodemailer";
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   try {
+    console.log("POST request received at /api/contact");
     const body = await req.json();
+    console.log("Request body:", body);
     const {
       name,
       email,
@@ -19,9 +20,11 @@ export async function POST(req: Request) {
     } = body ?? {};
 
     if (!name || !email || !phone || !countryCode || !category || !subCategory || !message) {
+      console.log("Missing fields error");
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
+    console.log("Creating database record...");
     const created = await prisma.contactSubmission.create({
       data: {
         name,
@@ -34,60 +37,7 @@ export async function POST(req: Request) {
         message,
       },
     });
-
-    // Send Email
-    try {
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: Number(process.env.SMTP_PORT),
-        secure: Number(process.env.SMTP_PORT) === 465, // true for 465, false for other ports
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        },
-      });
-
-      const mailOptions = {
-        from: `"${name}" <${process.env.SMTP_USER}>`,
-        to: process.env.CONTACT_EMAIL, // Receiver's email
-        replyTo: email,
-        subject: `New Contact Submission: ${subject || "No Subject"}`,
-        text: `
-          You have received a new message from your website contact form.
-          
-          Details:
-          Name: ${name}
-          Email: ${email}
-          Phone: ${countryCode} ${phone}
-          Category: ${category}
-          Sub-Category: ${subCategory}
-          
-          Message:
-          ${message}
-        `,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #333;">New Contact Submission</h2>
-            <div style="background: #f9f9f9; padding: 20px; border-radius: 5px;">
-              <p><strong>Name:</strong> ${name}</p>
-              <p><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>
-              <p><strong>Phone:</strong> ${countryCode} ${phone}</p>
-              <p><strong>Category:</strong> ${category}</p>
-              <p><strong>Sub-Category:</strong> ${subCategory}</p>
-              <hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">
-              <p><strong>Message:</strong></p>
-              <p style="white-space: pre-wrap;">${message}</p>
-            </div>
-          </div>
-        `,
-      };
-
-      await transporter.sendMail(mailOptions);
-      console.log("Email sent successfully to", process.env.CONTACT_EMAIL);
-    } catch (emailError: unknown) {
-      console.error("Error sending email:", emailError);
-      return NextResponse.json({ error: `Email Error: ${(emailError as Error).message}` }, { status: 500 });
-    }
+    console.log("Record created:", created.id);
 
     return NextResponse.json({ ok: true, id: created.id });
   } catch (err: unknown) {
@@ -108,5 +58,22 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: true, latest, count: latest.length });
   } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+export async function PATCH(req: Request) {
+  try {
+    const body = await req.json();
+    const { id, contacted } = body ?? {};
+    if (typeof id !== "number" || typeof contacted !== "boolean") {
+      return NextResponse.json({ error: "Invalid data" }, { status: 400 });
+    }
+    const updated = await prisma.contactSubmission.update({
+      where: { id },
+      data: { contacted },
+    });
+    return NextResponse.json({ ok: true, item: updated });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

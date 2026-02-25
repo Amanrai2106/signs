@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { services as staticServices } from "@/data/services";
 
 export const dynamic = "force-dynamic";
 
@@ -13,13 +14,31 @@ function isAuthed(req: Request) {
 
 export async function GET() {
   try {
-    const items = await prisma.service.findMany({
+    const items = await (prisma as any)["service"].findMany({
       orderBy: { id: "asc" },
       include: { subCategories: true },
     });
-    return NextResponse.json({ ok: true, items });
+    
+    if (items && items.length > 0) {
+      return NextResponse.json({ ok: true, items });
+    }
+    
+    // Fallback if DB is empty
+    throw new Error("Empty DB");
   } catch {
-    return NextResponse.json({ ok: false, error: "Internal error" }, { status: 500 });
+    const fallback = staticServices.map((s) => ({
+      id: s.id,
+      title: s.title,
+      description: s.description,
+      details: s.details ? JSON.stringify(s.details) : null,
+      relatedProjectIds: s.relatedProjectIds ? JSON.stringify(s.relatedProjectIds) : null,
+      subCategories: (s.subCategories || []).map((sc) => ({
+        id: sc.id,
+        title: sc.title,
+        image: sc.image,
+      })),
+    }));
+    return NextResponse.json({ ok: true, items: fallback });
   }
 }
 
@@ -33,12 +52,12 @@ export async function POST(req: Request) {
     if (!title || !description) {
       return NextResponse.json({ ok: false, error: "Missing fields" }, { status: 400 });
     }
-    const created = await prisma.service.create({
+    const created = await (prisma as any)["service"].create({
       data: {
         title,
         description,
-        details: details ?? [],
-        relatedProjectIds: relatedProjectIds ?? [],
+        details: details ? JSON.stringify(details) : null,
+        relatedProjectIds: relatedProjectIds ? JSON.stringify(relatedProjectIds) : null,
       },
     });
     return NextResponse.json({ ok: true, item: created });

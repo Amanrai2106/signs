@@ -17,7 +17,7 @@ export async function PUT(req: Request, { params }: { params: { id: string; subI
     const subId = Number(params.subId);
     const body = await req.json();
     const { key, title, image } = body ?? {};
-    const updated = await prisma.serviceSubCategory.update({
+    const updated = await (prisma as any)["serviceSubCategory"].update({
       where: { id: subId },
       data: { key, title, image },
     });
@@ -31,7 +31,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string; s
   try {
     if (!isAuthed(req)) return NextResponse.json({ ok: false }, { status: 401 });
     const subId = Number(params.subId);
-    await prisma.serviceSubCategory.delete({ where: { id: subId } });
+    await (prisma as any)["serviceSubCategory"].delete({ where: { id: subId } });
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ ok: false }, { status: 500 });

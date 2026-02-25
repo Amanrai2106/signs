@@ -3,10 +3,11 @@ import Loader from "@/components/Loader";
 import Nav from "@/components/Nav";
 import Hero from "@/components/Hero";
 import dynamic from "next/dynamic";
-import { posts } from "@/data/posts";
 import TransitionLink from "@/components/TransitionLink";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import React, { useEffect, useState } from "react";
+import type { Post } from "@/data/posts";
 
 // const SelectedProjects = dynamic(() => import("@/components/SelectedProjects"), {
 //   ssr: false,
@@ -29,12 +30,30 @@ const ProjectGrid = dynamic(() => import("@/components/ProjectGrid"), {
 const Footer = dynamic(() => import("@/components/Footer"), {
   ssr: false,
 });
+const GetInTouch = dynamic(() => import("@/components/GetInTouch"), {
+  ssr: false,
+});
 
 const InProgressWork = () => {
+  const [posts, setPosts] = useState<Post[]>([]);
   const inProgressPosts = posts.filter((p) => p.type === "project").slice(0, 3);
 
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch("/api/posts", { cache: "no-store" });
+        const data = await res.json();
+        if (res.ok && data?.ok && Array.isArray(data.items)) {
+          setPosts(data.items);
+        }
+      } catch {
+      }
+    };
+    load();
+  }, []);
+
   return (
-    <section className="bg-white py-20 px-6 md:px-12 lg:px-20">
+    <section className="bg-[#f7f9fc] py-20 px-6 md:px-12 lg:px-20">
       <div className="w-full max-w-7xl mx-auto">
         <div className="flex items-center justify-between gap-4 mb-10">
           <div>
@@ -122,14 +141,17 @@ export default function Home() {
       <Nav />
       <Loader />
       <Hero />
-      <AboutGrid />
-      <ProjectGrid />
-      {/* <SelectedProjects /> */}
-      {/* <ProjectStack /> */}
-      <CoreValues />
-      <BrandShowcase />
-      <InProgressWork />
-      <Footer />
+      <div className="mx-auto w-[96vw] max-w-[1600px] bg-[#f7f9fc]">
+        <ProjectGrid />
+        <AboutGrid />
+        {/* <SelectedProjects /> */}
+        {/* <ProjectStack /> */}
+        <CoreValues />
+        <BrandShowcase />
+        <InProgressWork />
+        <GetInTouch />
+        <Footer />
+      </div>
     </main>
   );
 }

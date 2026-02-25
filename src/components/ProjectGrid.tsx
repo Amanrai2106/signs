@@ -7,18 +7,34 @@ import { Button } from "@/components/ui/Button";
 import TransitionLink from "./TransitionLink";
 
 const ProjectGrid = () => {
-  const gridPosts = posts.filter((p) => p.type === "project").slice(0, 9);
+  const [remotePosts, setRemotePosts] = React.useState<any[]>([]);
+  
+  React.useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch("/api/posts", { cache: "no-store" });
+        const data = await res.json();
+        if (res.ok && data?.ok) {
+          setRemotePosts(data.items.filter((p: any) => p.type === "project"));
+        }
+      } catch {}
+    };
+    load();
+  }, []);
+
+  const gridPosts = React.useMemo(() => {
+    const base = remotePosts.length > 0 ? remotePosts : posts.filter((p) => p.type === "project");
+    return base.slice(0, 7);
+  }, [remotePosts]);
 
   const layoutSpans = [
-    "lg:col-span-2 lg:row-span-2",
-    "lg:row-span-1",
-    "lg:row-span-1",
-    "lg:row-span-2",
-    "lg:col-span-2 lg:row-span-1",
-    "lg:row-span-1",
-    "lg:row-span-1",
-    "lg:row-span-2",
-    "lg:row-span-1",
+    "lg:col-span-2 lg:row-span-2", // 1
+    "lg:col-span-1 lg:row-span-1", // 2
+    "lg:col-span-1 lg:row-span-1", // 3
+    "lg:col-span-1 lg:row-span-2", // 4
+    "lg:col-span-2 lg:row-span-1", // 5
+    "lg:col-span-1 lg:row-span-1", // 6
+    "lg:col-span-1 lg:row-span-1", // 7
   ];
 
   return (

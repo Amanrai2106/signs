@@ -10,12 +10,12 @@ const Loader = () => {
   const loaderRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const hasShownLoader = sessionStorage.getItem("hasShownLoader");
-    if (hasShownLoader) {
-      setDone(true);
-    } else {
+    // const hasShownLoader = sessionStorage.getItem("hasShownLoader");
+    // if (hasShownLoader) {
+    //   setDone(true);
+    // } else {
       setShouldShow(true);
-    }
+    // }
   }, []);
 
   useEffect(() => {
@@ -24,7 +24,7 @@ const Loader = () => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({
         onComplete: () => {
-          sessionStorage.setItem("hasShownLoader", "true");
+          // sessionStorage.setItem("hasShownLoader", "true");
           setDone(true);
         },
       });

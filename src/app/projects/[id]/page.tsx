@@ -1,41 +1,167 @@
-'use client';
+"use client";
 
-import React, { use, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import Nav from '@/components/Nav';
-import Footer from '@/components/Footer';
-import { projects } from '@/data/projects';
-import { services } from '@/data/services';
-import { posts } from '@/data/posts';
-import { notFound } from 'next/navigation';
-import { Button } from '@/components/ui/Button';
-import { ArrowUpRight, ArrowRight } from 'lucide-react';
-import TransitionLink from '@/components/TransitionLink';
-import Image from 'next/image';
+import React, { use, useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import Nav from "@/components/Nav";
+import Footer from "@/components/Footer";
+import GetInTouch from "@/components/GetInTouch";
+import { Button } from "@/components/ui/Button";
+import { ArrowUpRight, ArrowRight } from "lucide-react";
+import TransitionLink from "@/components/TransitionLink";
+import Image from "next/image";
+import { projects as staticProjects } from "@/data/projects";
+
+type ProjectSubCategory = { id: string; title: string; image: string };
+
+type Project = {
+  id: string;
+  title: string;
+  description: string;
+  src: string;
+  color?: string;
+  subCategories?: ProjectSubCategory[];
+  relatedServiceIds?: number[];
+};
+
+type Service = {
+  id: number;
+  title: string;
+  description: string;
+};
+
+type Post = {
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  categoryId: string;
+  subCategoryId: string;
+  type: "project" | "service";
+};
 
 export default function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const project = projects.find((p) => p.id === id);
+  const [project, setProject] = useState<Project | null>(null);
+  const [relatedServices, setRelatedServices] = useState<Service[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  if (!project) {
-    notFound();
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setLoading(true);
+        const [projectRes, postsRes] = await Promise.all([
+          fetch(`/api/projects/${id}`, { cache: "no-store" }),
+          fetch("/api/posts", { cache: "no-store" }),
+        ]);
+        const projectData = await projectRes.json();
+        const postsData = await postsRes.json();
+
+        const safeParseIds = (val: any): number[] | undefined => {
+          if (!val) return undefined;
+          try {
+            const parsed = typeof val === "string" ? JSON.parse(val) : val;
+            if (Array.isArray(parsed)) {
+              return parsed.map((x: any) => Number(x)).filter((n: any) => Number.isFinite(n));
+            }
+            return undefined;
+          } catch {
+            return undefined;
+          }
+        };
+
+        let sourceProject: any | null = null;
+        if (projectRes.ok && projectData?.ok && projectData.item) {
+          sourceProject = projectData.item;
+        } else {
+          const fallback = staticProjects.find((sp) => sp.id === id);
+          if (fallback) {
+            sourceProject = {
+              id: fallback.id,
+              title: fallback.title,
+              description: fallback.description,
+              src: fallback.src,
+              color: fallback.color ?? null,
+              relatedServiceIds: fallback.relatedServiceIds ?? null,
+              subCategories: fallback.subCategories || [],
+            };
+          }
+        }
+
+        if (!sourceProject) {
+          setError("Project not found");
+          setLoading(false);
+          return;
+        }
+
+        const p = sourceProject;
+        const mappedProject: Project = {
+          id: p.id,
+          title: p.title,
+          description: p.description,
+          src: p.src,
+          color: p.color ?? undefined,
+          subCategories: p.subCategories || [],
+          relatedServiceIds: safeParseIds(p.relatedServiceIds),
+        };
+        setProject(mappedProject);
+
+        if (postsRes.ok && postsData?.ok && Array.isArray(postsData.items)) {
+          setPosts(postsData.items);
+        } else {
+          setPosts([]);
+        }
+
+        if (mappedProject.relatedServiceIds && mappedProject.relatedServiceIds.length) {
+          const servicesRes = await fetch("/api/services", { cache: "no-store" });
+          const servicesData = await servicesRes.json();
+          if (servicesRes.ok && servicesData?.ok && Array.isArray(servicesData.items)) {
+            const mappedServices: Service[] = servicesData.items
+              .filter((s: any) => mappedProject.relatedServiceIds?.includes(s.id))
+              .map((s: any) => ({
+                id: s.id,
+                title: s.title,
+                description: s.description,
+              }));
+            setRelatedServices(mappedServices);
+          }
+        } else {
+          setRelatedServices([]);
+        }
+
+        setError("");
+      } catch {
+        setError("Failed to load project");
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-500">Loading project...</p>
+      </div>
+    );
   }
 
-  // Related Services based on mapping
-  const relatedServices = services.filter(s => 
-    (project as any).relatedServiceIds?.includes(s.id)
-  );
+  if (error || !project) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center">
+        <Nav />
+        <p className="mt-10 text-gray-500">Project not found.</p>
+      </div>
+    );
+  }
 
-  // State for filtering
-  const [activeFilter, setActiveFilter] = useState('all');
+  const projectPosts = posts.filter((p) => p.type === "project" && p.categoryId === project.id);
 
-  // Filter posts belonging to this project category
-  const projectPosts = posts.filter(p => p.categoryId === id);
-
-  // Apply subcategory filter
-  const filteredPosts = activeFilter === 'all' 
-    ? projectPosts 
-    : projectPosts.filter(p => p.subCategoryId === activeFilter);
+  const filteredPosts =
+    activeFilter === "all" ? projectPosts : projectPosts.filter((p) => p.subCategoryId === activeFilter);
 
   const layoutSpans = [
     "lg:col-span-2 lg:row-span-2",
@@ -54,7 +180,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
       <Nav />
       
       <main className="relative z-10 pt-32 pb-20">
-        <div className="w-full mx-auto px-6 md:px-12">
+        <div className="w-full max-w-[1600px] mx-auto px-6 md:px-12 bg-white rounded-3xl shadow-sm">
           
           {/* Header & Filter Section */}
           <div className="mb-16">
@@ -217,33 +343,11 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
             </section>
           )}
 
-          {/* CTA Section */}
-          <section className="mt-32 relative overflow-hidden rounded-3xl bg-white border border-gray-200 p-12 md:p-24 text-center shadow-xl shadow-gray-200/50">
-            <div className="relative z-10 max-w-3xl mx-auto">
-                <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight text-black">
-                    Ready to start your next project?
-                </h2>
-                <p className="text-xl text-gray-600 mb-10 leading-relaxed">
-                    Let&apos;s collaborate to bring the vision of {project.title.toLowerCase()} projects to life with precision and creativity.
-                </p>
-                <Button 
-                    href="/contact"
-                    className="h-14 px-8 rounded-full text-base"
-                    variant="primary"
-                >
-                    Get in Touch
-                </Button>
-            </div>
-            
-            {/* Background decorative elements */}
-            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40">
-                <div className="absolute top-[-50%] left-[-20%] w-[80%] h-[80%] bg-orange-100 rounded-full blur-[100px]" />
-                <div className="absolute bottom-[-50%] right-[-20%] w-[80%] h-[80%] bg-blue-100 rounded-full blur-[100px]" />
-            </div>
-          </section>
+          
 
         </div>
       </main>
+      <GetInTouch />
       <Footer />
     </div>
   );

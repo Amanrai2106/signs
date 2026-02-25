@@ -1,0 +1,50 @@
+warning: in the working copy of 'prisma/schema.prisma', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/api/admin/seed/route.ts', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/prisma/schema.prisma b/prisma/schema.prisma[m
+[1mindex 531814d..b51aac5 100644[m
+[1m--- a/prisma/schema.prisma[m
+[1m+++ b/prisma/schema.prisma[m
+[36m@@ -26,8 +26,8 @@[m [mmodel Service {[m
+   id                Int                  @id @default(autoincrement())[m
+   title             String[m
+   description       String[m
+[31m-  details           Json?[m
+[31m-  relatedProjectIds Json?[m
+[32m+[m[32m  details           String?[m
+[32m+[m[32m  relatedProjectIds String?[m
+   subCategories     ServiceSubCategory[][m
+   createdAt         DateTime             @default(now())[m
+   updatedAt         DateTime             @updatedAt[m
+[36m@@ -48,7 +48,7 @@[m [mmodel ProjectCategory {[m
+   description        String[m
+   src                String[m
+   color              String?[m
+[31m-  relatedServiceIds  Json?[m
+[32m+[m[32m  relatedServiceIds  String?[m
+   subCategories      ProjectSubCategory[][m
+   createdAt          DateTime              @default(now())[m
+   updatedAt          DateTime              @updatedAt[m
+[1mdiff --git a/src/app/api/admin/seed/route.ts b/src/app/api/admin/seed/route.ts[m
+[1mindex 125551e..cc4cc55 100644[m
+[1m--- a/src/app/api/admin/seed/route.ts[m
+[1m+++ b/src/app/api/admin/seed/route.ts[m
+[36m@@ -28,8 +28,8 @@[m [mexport async function POST(req: Request) {[m
+         data: {[m
+           title: s.title,[m
+           description: s.description,[m
+[31m-          details: s.details ?? [],[m
+[31m-          relatedProjectIds: s.relatedProjectIds ?? [],[m
+[32m+[m[32m          details: s.details ? JSON.stringify(s.details) : null,[m
+[32m+[m[32m          relatedProjectIds: s.relatedProjectIds ? JSON.stringify(s.relatedProjectIds) : null,[m
+         },[m
+       });[m
+       for (const sc of s.subCategories ?? []) {[m
+[36m@@ -48,7 +48,7 @@[m [mexport async function POST(req: Request) {[m
+           description: p.description,[m
+           src: p.src,[m
+           color: p.color ?? null,[m
+[31m-          relatedServiceIds: p.relatedServiceIds ?? [],[m
+[32m+[m[32m          relatedServiceIds: p.relatedServiceIds ? JSON.stringify(p.relatedServiceIds) : null,[m
+         },[m
+       });[m
+       for (const sc of p.subCategories ?? []) {[m

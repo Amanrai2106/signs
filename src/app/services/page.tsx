@@ -1,18 +1,25 @@
-'use client';
+"use client";
 
-import React, { useRef } from 'react';
-import { motion, useMotionTemplate, useMotionValue, useSpring, useTransform } from 'framer-motion';
-import Nav from '@/components/Nav';
-import Footer from '@/components/Footer';
-import { services } from '@/data/services';
-import { ArrowUpRight, Sparkles } from 'lucide-react';
-import TransitionLink from '@/components/TransitionLink';
+import React, { useEffect, useRef, useState } from "react";
+import { motion, useMotionTemplate, useMotionValue, useSpring, useTransform } from "framer-motion";
+import Nav from "@/components/Nav";
+import Footer from "@/components/Footer";
+import GetInTouch from "@/components/GetInTouch";
+import { ArrowUpRight, Sparkles } from "lucide-react";
+import TransitionLink from "@/components/TransitionLink";
+
+interface ServiceSubCategory {
+  id: string;
+  title: string;
+  image: string;
+}
 
 interface Service {
   id: number;
   title: string;
   description: string;
   details?: string[];
+  subCategories?: ServiceSubCategory[];
 }
 
 const ServiceCard = ({ service, index }: { service: Service; index: number }) => {
@@ -119,14 +126,7 @@ const ServiceCard = ({ service, index }: { service: Service; index: number }) =>
 
 export default function ServicesPage() {
   return (
-    <div className="min-h-screen text-black selection:bg-orange-500/30 overflow-hidden relative">
-      {/* Background Ambience */}
-      <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-        <div className="absolute top-[-10%] right-[-5%] w-[60vw] h-[60vw] bg-orange-100/40 rounded-full blur-[150px]" />
-        <div className="absolute bottom-[-10%] left-[-5%] w-[50vw] h-[50vw] bg-purple-100/40 rounded-full blur-[150px]" />
-        <div className="absolute top-[40%] left-[30%] w-[30vw] h-[30vw] bg-blue-100/40 rounded-full blur-[150px]" />
-      </div>
-
+    <div className="min-h-screen bg-[#f7f9fc] text-black selection:bg-orange-500/30 overflow-hidden relative">
       <Nav />
       
       <main className="pt-32 pb-20 px-6 md:px-12 w-full relative z-10">
@@ -135,9 +135,9 @@ export default function ServicesPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="flex flex-col md:flex-row md:items-end justify-between gap-10"
+            className="flex flex-col items-center gap-10"
           >
-            <div className="max-w-4xl">
+            <div className="max-w-4xl text-center">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -149,48 +149,154 @@ export default function ServicesPage() {
               </motion.div>
               
               <motion.h1 
-                className="text-6xl md:text-8xl lg:text-9xl font-bold tracking-tighter mb-8 leading-none"
+                className="text-6xl md:text-8xl lg:text-9xl font-bold tracking-tighter mb-8 leading-none text-black"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
                 OUR <br />
-                <span className="text-orange-600">
-                  SERVICES
-                </span>
+                SERVICES
               </motion.h1>
               
               <p className="text-xl md:text-2xl text-gray-600 max-w-2xl leading-relaxed font-light">
                 We craft immersive physical and digital experiences that elevate brands and connect with people in meaningful ways.
               </p>
             </div>
-            
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="hidden lg:block mb-4"
-            >
-              <div className="w-40 h-40 rounded-full border border-gray-200 flex items-center justify-center animate-spin-slow relative">
-                <div className="absolute inset-0 rounded-full border border-orange-500/20 border-t-orange-500 animate-spin" style={{ animationDuration: '3s' }}></div>
-                <div className="w-28 h-28 rounded-full bg-white flex items-center justify-center shadow-lg">
-                  <ArrowUpRight className="w-10 h-10 text-orange-600" />
-                </div>
-              </div>
-            </motion.div>
           </motion.div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-          {services.map((service, index) => (
-            <TransitionLink href={`/services/${service.id}`} key={service.id} className="block h-full">
-              <ServiceCard service={service} index={index} />
-            </TransitionLink>
-          ))}
-        </div>
+        <ServicesGrid />
       </main>
 
+      <GetInTouch />
       <Footer />
+    </div>
+  );
+}
+
+function ServicesGrid() {
+  const [items, setItems] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const safeParseArray = (val: any): string[] | undefined => {
+    if (!val) return undefined;
+    try {
+      const parsed = typeof val === "string" ? JSON.parse(val) : val;
+      return Array.isArray(parsed) ? parsed : undefined;
+    } catch {
+      return undefined;
+    }
+  };
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch("/api/services", { cache: "no-store" });
+        const data = await res.json();
+        if (res.ok && data?.ok && Array.isArray(data.items)) {
+          const mapped: Service[] = data.items.map((s: any) => ({
+            id: s.id,
+            title: s.title,
+            description: s.description,
+            details: safeParseArray(s.details),
+            subCategories: s.subCategories || [],
+          }));
+          setItems(mapped);
+        } else {
+          setError("Failed to load services");
+        }
+      } catch {
+        setError("Failed to load services");
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  if (loading) {
+    return <p className="text-gray-500">Loading services...</p>;
+  }
+
+  if (error) {
+    return <p className="text-red-600">{error}</p>;
+  }
+
+  if (!items.length) {
+    return <p className="text-gray-500">No services found.</p>;
+  }
+
+  return (
+    <div className="space-y-10 md:space-y-14">
+      {items.map((service, index) => {
+        const img =
+          service.subCategories && service.subCategories.length
+            ? service.subCategories[0].image
+            : "/imgs/img-1.png";
+        const imageFirst = index % 2 === 0;
+        return (
+          <motion.section
+            key={service.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: index * 0.1 }}
+            className="rounded-3xl border border-gray-200 bg-white shadow-xl shadow-gray-200/40 overflow-hidden"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 md:min-h-[85vh]">
+              {imageFirst && (
+                <div className="relative h-64 md:h-full min-h-[280px]">
+                  <img
+                    src={img}
+                    alt={service.title}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                </div>
+              )}
+              <div className="p-8 md:p-12 flex flex-col justify-center md:h-full">
+                <span className="text-sm font-mono text-orange-600 mb-4">0{service.id}</span>
+                <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">{service.title}</h2>
+                <p className="text-gray-600 text-base md:text-lg leading-relaxed mb-6 whitespace-pre-line">
+                  {service.description}
+                </p>
+                {service.details && service.details.length > 0 && (
+                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-8">
+                    {service.details.slice(0, 6).map((d, i) => (
+                      <li key={i} className="flex items-start text-sm text-gray-700">
+                        <span className="mt-2 mr-3 h-1.5 w-1.5 rounded-full bg-orange-500"></span>
+                        <span>{d}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <div>
+                  <TransitionLink
+                    href={`/services/${service.id}`}
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-black text-white hover:bg-orange-600 transition-colors"
+                  >
+                    Read More
+                    <span className="inline-block w-4 h-4">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M7 17L17 7"></path>
+                        <path d="M8 7h9v9"></path>
+                      </svg>
+                    </span>
+                  </TransitionLink>
+                </div>
+              </div>
+              {!imageFirst && (
+                <div className="relative h-64 md:h-full min-h-[280px]">
+                  <img
+                    src={img}
+                    alt={service.title}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                </div>
+              )}
+            </div>
+          </motion.section>
+        );
+      })}
     </div>
   );
 }

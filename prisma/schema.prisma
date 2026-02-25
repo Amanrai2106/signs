@@ -1,6 +1,6 @@
 // datasource and generator
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -19,6 +19,7 @@ model ContactSubmission {
   subCategory  String
   subject      String?
   message      String
+  contacted    Boolean  @default(false)
   createdAt    DateTime @default(now())
 }
 
@@ -26,8 +27,8 @@ model Service {
   id                Int                  @id @default(autoincrement())
   title             String
   description       String
-  details           Json?
-  relatedProjectIds Json?
+  details           String?
+  relatedProjectIds String?
   subCategories     ServiceSubCategory[]
   createdAt         DateTime             @default(now())
   updatedAt         DateTime             @updatedAt
@@ -48,7 +49,7 @@ model ProjectCategory {
   description        String
   src                String
   color              String?
-  relatedServiceIds  Json?
+  relatedServiceIds  String?
   subCategories      ProjectSubCategory[]
   createdAt          DateTime              @default(now())
   updatedAt          DateTime              @updatedAt
@@ -71,6 +72,23 @@ model Post {
   categoryId    String
   subCategoryId String
   type          String
+  
+  // New fields for rich project pages
+  client        String?
+  location      String?
+  year          String?
+  scope         String?
+  
+  challengeTitle       String?
+  challengeDescription String?
+  challengeItems       String? // JSON string of string[]
+  
+  solutionTitle       String?
+  solutionDescription String?
+  solutionItems       String? // JSON string of { label: string, value: string }[]
+  
+  galleryImages        String? // JSON string of string[]
+  
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }

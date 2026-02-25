@@ -1,8 +1,5 @@
 "use client";
-import React, { use, useRef } from "react";
-import { posts } from "@/data/posts";
-import { projects } from "@/data/projects";
-import { notFound } from "next/navigation";
+import React, { use, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import TransitionLink from "@/components/TransitionLink";
 import Nav from "@/components/Nav";
@@ -10,23 +7,130 @@ import Footer from "@/components/Footer";
 import GetInTouch from "@/components/GetInTouch";
 import { motion, useScroll, useTransform, Variants } from "framer-motion";
 import { ArrowLeft, ArrowRight, MapPin, Calendar, Building2, Layers } from "lucide-react";
+import { posts as staticPosts } from "@/data/posts";
+import { projects as staticProjects } from "@/data/projects";
+
+type ProjectSubCategory = { id: string; title: string; image: string };
+
+type Project = {
+  id: string;
+  title: string;
+  subCategories?: ProjectSubCategory[];
+};
+
+type Post = {
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  categoryId: string;
+  subCategoryId: string;
+  type: "project" | "service";
+  client?: string;
+  location?: string;
+  year?: string;
+  scope?: string;
+  challengeTitle?: string;
+  challengeDescription?: string;
+  challengeItems?: string; // JSON string
+  solutionTitle?: string;
+  solutionDescription?: string;
+  solutionItems?: string; // JSON string
+  galleryImages?: string; // JSON string
+};
 
 export default function ProjectPostPage({ params }: { params: Promise<{ id: string; subId: string; postId: string }> }) {
   const { id, subId, postId } = use(params);
-  const post = posts.find((p) => p.id === postId);
-  const project = projects.find((p) => p.id === id);
-  const subCategory = project?.subCategories?.find((s) => s.id === subId);
+  const [project, setProject] = useState<Project | null>(null);
+  const [subCategory, setSubCategory] = useState<ProjectSubCategory | null>(null);
+  const [post, setPost] = useState<Post | null>(null);
+  const [relatedPosts, setRelatedPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  if (!post || !project || !subCategory) {
-    notFound();
-  }
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setLoading(true);
+        
+        // 1. Try fetching post from API first
+        let currentPost: Post | null = null;
+        try {
+          const res = await fetch(`/api/posts/${postId}`, { cache: "no-store" });
+          const data = await res.json();
+          if (res.ok && data?.ok) {
+            currentPost = data.item;
+          }
+        } catch {}
 
-  // Get related posts from the same subcategory, excluding current post
-  const relatedPosts = posts.filter(
-    (p) => p.subCategoryId === subId && p.id !== postId
-  ).slice(0, 2);
+        const fromStatic = staticProjects.find((p) => p.id === id) as any | undefined;
+        
+        let mappedProject: Project | null = null;
+        let foundSub: ProjectSubCategory | null = null;
+
+        if (fromStatic) {
+          const p = fromStatic;
+          mappedProject = {
+            id: p.id,
+            title: p.title,
+            subCategories: p.subCategories || [],
+          };
+          foundSub = mappedProject.subCategories?.find((sc) => sc.id === subId) || null;
+        }
+
+        // If post came from API, we can derive project/subCategory info if missing from static
+        if (currentPost && (!mappedProject || !foundSub)) {
+          if (!mappedProject) {
+            mappedProject = {
+              id: currentPost.categoryId,
+              title: currentPost.categoryId.charAt(0).toUpperCase() + currentPost.categoryId.slice(1),
+              subCategories: []
+            };
+          }
+          if (!foundSub) {
+            foundSub = {
+              id: currentPost.subCategoryId,
+              title: currentPost.subCategoryId.charAt(0).toUpperCase() + currentPost.subCategoryId.slice(1),
+              image: currentPost.image
+            };
+          }
+        }
+
+        const allPosts = (staticPosts as Post[]).filter((pp) => pp.type === "project");
+        
+        // If not from API, use static
+        if (!currentPost) {
+          currentPost = allPosts.find(
+            (pp) => pp.id === postId && pp.categoryId === id && pp.subCategoryId === subId
+          ) || null;
+        }
+
+        if (!mappedProject || !foundSub || !currentPost) {
+          setError("Project or Subcategory or Post not found");
+          setLoading(false);
+          return;
+        }
+
+        setProject(mappedProject);
+        setSubCategory(foundSub);
+        setPost(currentPost);
+        const related = allPosts
+          .filter((pp) => pp.subCategoryId === subId && pp.id !== postId)
+          .slice(0, 2);
+        setRelatedPosts(related);
+
+        setError("");
+      } catch {
+        setError("Failed to load");
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [id, subId, postId]);
 
   const containerRef = useRef(null);
+
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"],
@@ -56,8 +160,34 @@ export default function ProjectPostPage({ params }: { params: Promise<{ id: stri
     }
   };
 
+  if (loading) {
+    return (
+      <main
+        ref={containerRef}
+        className="bg-[#f7f9fc] min-h-screen flex items-center justify-center text-black"
+      >
+        <p className="text-gray-500">Loading...</p>
+      </main>
+    );
+  }
+
+  if (error || !project || !subCategory || !post) {
+    return (
+      <main
+        ref={containerRef}
+        className="bg-[#f7f9fc] min-h-screen flex flex-col items-center justify-center text-black"
+      >
+        <Nav />
+        <p className="mt-10 text-gray-500">This project post could not be found.</p>
+      </main>
+    );
+  }
+
   return (
-    <main ref={containerRef} className="bg-white min-h-screen text-black selection:bg-orange-500/30 overflow-hidden relative">
+    <main
+      ref={containerRef}
+      className="bg-[#f7f9fc] min-h-screen text-black selection:bg-orange-500/30 overflow-hidden relative"
+    >
       <Nav />
 
       {/* Hero Section - Full Screen & Immersive */}
@@ -133,59 +263,44 @@ export default function ProjectPostPage({ params }: { params: Promise<{ id: stri
                         <Building2 className="w-4 h-4 text-orange-500" />
                         <span>Client</span>
                     </div>
-                    <p className="text-xl font-serif text-gray-900">Confidential</p>
+                    <p className="text-xl font-serif text-gray-900">{post.client || "Confidential"}</p>
                 </div>
                 <div className="space-y-2">
                     <div className="flex items-center gap-2 text-gray-400 text-xs font-bold uppercase tracking-widest">
                         <MapPin className="w-4 h-4 text-orange-500" />
                         <span>Location</span>
                     </div>
-                    <p className="text-xl font-serif text-gray-900">New Delhi</p>
+                    <p className="text-xl font-serif text-gray-900">{post.location || "New Delhi"}</p>
                 </div>
                 <div className="space-y-2">
                     <div className="flex items-center gap-2 text-gray-400 text-xs font-bold uppercase tracking-widest">
                         <Calendar className="w-4 h-4 text-orange-500" />
                         <span>Year</span>
                     </div>
-                    <p className="text-xl font-serif text-gray-900">2024</p>
+                    <p className="text-xl font-serif text-gray-900">{post.year || "2024"}</p>
                 </div>
                 <div className="space-y-2">
                     <div className="flex items-center gap-2 text-gray-400 text-xs font-bold uppercase tracking-widest">
                         <Layers className="w-4 h-4 text-orange-500" />
                         <span>Scope</span>
                     </div>
-                    <p className="text-xl font-serif text-gray-900">End-to-End</p>
+                    <p className="text-xl font-serif text-gray-900">{post.scope || "End-to-End"}</p>
                 </div>
             </div>
         </div>
       </section>
 
       {/* Detailed Content Sections */}
-      <section className="py-24 md:py-32 px-6 md:px-12 w-full max-w-[95%] mx-auto">
+      <section className="py-24 md:py-32 px-6 md:px-12 w-full max-w-[95%] mx-auto bg-white rounded-[3rem] shadow-lg">
         {/* Overview */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start mb-32">
             <div className="lg:col-span-4 sticky top-32">
                 <h2 className="text-3xl md:text-4xl font-bold mb-6 text-black">Project Overview</h2>
                 <div className="h-1 w-20 bg-orange-500 mb-6" />
-                <p className="text-gray-500 text-lg">
-                    An in-depth look at how we transformed the vision into reality, focusing on functionality and aesthetic excellence.
-                </p>
             </div>
             <div className="lg:col-span-8">
-                <p className="text-2xl md:text-3xl font-light leading-relaxed text-gray-800 mb-10">
+                <div className="text-lg md:text-xl leading-relaxed text-gray-600 whitespace-pre-wrap">
                     {post.description}
-                </p>
-                <div className="prose prose-lg prose-gray max-w-none text-gray-600 leading-loose">
-                    <p>
-                        This project represents a significant milestone in our {subCategory.title.toLowerCase()} portfolio. 
-                        The primary objective was to create a cohesive environment that speaks to the users while maintaining 
-                        high standards of durability and maintenance.
-                    </p>
-                    <p>
-                        Our approach was holistic, considering every touchpoint from the entrance to the finest details. 
-                        By integrating advanced fabrication techniques with traditional craftsmanship, we delivered a solution 
-                        that stands the test of time.
-                    </p>
                 </div>
             </div>
         </div>
@@ -195,13 +310,12 @@ export default function ProjectPostPage({ params }: { params: Promise<{ id: stri
             <div className="grid grid-cols-1 lg:grid-cols-2">
                 <div className="p-12 md:p-20 flex flex-col justify-center">
                     <span className="text-orange-600 font-mono text-sm tracking-widest uppercase mb-4">01. The Challenge</span>
-                    <h3 className="text-3xl md:text-4xl font-bold mb-6 text-black">Navigating Complexity</h3>
+                    <h3 className="text-3xl md:text-4xl font-bold mb-6 text-black">{post.challengeTitle || "Navigating Complexity"}</h3>
                     <p className="text-gray-600 text-lg leading-relaxed mb-8">
-                        Every project comes with its unique set of constraints. For {post.title}, the main challenge was 
-                        balancing the architectural integrity with the need for clear, functional signage and branding elements.
+                        {post.challengeDescription || `Every project comes with its unique set of constraints. For ${post.title}, the main challenge was balancing the architectural integrity with the need for clear, functional signage and branding elements.`}
                     </p>
                     <ul className="space-y-4">
-                        {['Strict architectural guidelines', 'High-traffic durability requirements', 'Complex wayfinding needs'].map((item, i) => (
+                        {(post.challengeItems ? JSON.parse(post.challengeItems) : ['Strict architectural guidelines', 'High-traffic durability requirements', 'Complex wayfinding needs']).map((item: string, i: number) => (
                             <li key={i} className="flex items-center gap-3 text-gray-700">
                                 <span className="w-2 h-2 rounded-full bg-orange-500" />
                                 {item}
@@ -241,34 +355,56 @@ export default function ProjectPostPage({ params }: { params: Promise<{ id: stri
             <div className="grid grid-cols-1 lg:grid-cols-2">
                 <div className="relative h-[400px] lg:h-auto min-h-[500px] order-2 lg:order-1">
                     <Image
-                        src={post.image}
+                        src={post.galleryImages && JSON.parse(post.galleryImages).length > 0 ? JSON.parse(post.galleryImages)[0] : post.image}
                         alt="Solution visual"
                         fill
-                        className="object-cover opacity-80"
+                        className="object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent" />
                 </div>
                 <div className="p-12 md:p-20 flex flex-col justify-center order-1 lg:order-2">
                     <span className="text-orange-500 font-mono text-sm tracking-widest uppercase mb-4">02. The Solution</span>
-                    <h3 className="text-3xl md:text-4xl font-bold mb-6">Precision & Elegance</h3>
+                    <h3 className="text-3xl md:text-4xl font-bold mb-6">{post.solutionTitle || "Precision & Elegance"}</h3>
                     <p className="text-gray-300 text-lg leading-relaxed mb-8">
-                        We developed a comprehensive design language that utilizes premium materials and clean lines. 
-                        The result is a system that not only guides users effectively but also enhances the overall 
-                        aesthetic of the space.
+                        {post.solutionDescription || "We developed a comprehensive design language that utilizes premium materials and clean lines. The result is a system that not only guides users effectively but also enhances the overall aesthetic of the space."}
                     </p>
                     <div className="grid grid-cols-2 gap-8 mt-4">
-                        <div>
-                            <span className="block text-3xl font-bold text-orange-500 mb-2">100%</span>
-                            <span className="text-sm text-gray-400 uppercase tracking-widest">Custom Made</span>
-                        </div>
-                        <div>
-                            <span className="block text-3xl font-bold text-orange-500 mb-2">4 Weeks</span>
-                            <span className="text-sm text-gray-400 uppercase tracking-widest">Turnaround</span>
-                        </div>
+                        {(post.solutionItems ? JSON.parse(post.solutionItems) : [{label: 'Custom Made', value: '100%'}, {label: 'Turnaround', value: '4 Weeks'}]).map((item: any, i: number) => (
+                            <div key={i}>
+                                <span className="block text-3xl font-bold text-orange-500 mb-2">{item.value}</span>
+                                <span className="text-sm text-gray-400 uppercase tracking-widest">{item.label}</span>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>
         </div>
+
+        {/* Gallery Grid */}
+        {post.galleryImages && JSON.parse(post.galleryImages).length > 0 && (
+          <div className="mt-32">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
+              <div>
+                <span className="text-orange-600 font-bold uppercase tracking-widest text-sm mb-2 block">Visual Journey</span>
+                <h2 className="text-4xl md:text-6xl font-bold text-black tracking-tighter">PROJECT GALLERY</h2>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {JSON.parse(post.galleryImages).map((img: string, i: number) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className={`relative aspect-[4/3] rounded-[2rem] overflow-hidden bg-gray-100 group ${i % 4 === 0 ? 'md:col-span-2 md:aspect-[16/9]' : ''}`}
+                >
+                  <Image src={img} alt={`Gallery ${i}`} fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Related Projects */}

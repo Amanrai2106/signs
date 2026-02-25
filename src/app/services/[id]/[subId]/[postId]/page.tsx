@@ -1,8 +1,5 @@
 "use client";
-import React, { use, useRef } from "react";
-import { posts } from "@/data/posts";
-import { services } from "@/data/services";
-import { notFound } from "next/navigation";
+import React, { use, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import TransitionLink from "@/components/TransitionLink";
 import Nav from "@/components/Nav";
@@ -10,23 +7,82 @@ import Footer from "@/components/Footer";
 import GetInTouch from "@/components/GetInTouch";
 import { motion, useScroll, useTransform, Variants } from "framer-motion";
 import { ArrowLeft, ArrowRight, MapPin, Calendar, Building2, Layers } from "lucide-react";
+import { posts as staticPosts } from "@/data/posts";
+import { services as staticServices } from "@/data/services";
+
+type ServiceSubCategory = { id: string; title: string; image: string };
+
+type Service = {
+  id: number;
+  title: string;
+  subCategories?: ServiceSubCategory[];
+};
+
+type Post = {
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  categoryId: string;
+  subCategoryId: string;
+  type: "project" | "service";
+};
 
 export default function ServicePostPage({ params }: { params: Promise<{ id: string; subId: string; postId: string }> }) {
   const { id, subId, postId } = use(params);
-  const post = posts.find((p) => p.id === postId);
-  const service = services.find((s) => s.id === Number(id));
-  const subCategory = service?.subCategories?.find((s) => s.id === subId);
+  const [service, setService] = useState<Service | null>(null);
+  const [subCategory, setSubCategory] = useState<ServiceSubCategory | null>(null);
+  const [post, setPost] = useState<Post | null>(null);
+  const [relatedPosts, setRelatedPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  if (!post || !service || !subCategory) {
-    notFound();
-  }
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setLoading(true);
+        const fromStatic = staticServices.find((s) => s.id === Number(id)) as any | undefined;
+        if (!fromStatic) {
+          setError("Service not found");
+          setLoading(false);
+          return;
+        }
 
-  // Get related posts from the same subcategory, excluding current post
-  const relatedPosts = posts.filter(
-    (p) => p.subCategoryId === subId && p.id !== postId
-  ).slice(0, 2);
+        const s = fromStatic;
+        const mappedService: Service = {
+          id: s.id,
+          title: s.title,
+          subCategories: s.subCategories || [],
+        };
+        setService(mappedService);
+        const foundSub = mappedService.subCategories?.find((sc) => sc.id === subId) || null;
+        setSubCategory(foundSub);
+
+        const allPosts = (staticPosts as Post[]).filter(
+          (p) => p.type === "service" && p.categoryId === String(id)
+        );
+        const current =
+          allPosts.find(
+            (p) => p.id === postId && p.categoryId === String(id) && p.subCategoryId === subId
+          ) || null;
+        setPost(current);
+        const related = allPosts
+          .filter((p) => p.subCategoryId === subId && p.id !== postId)
+          .slice(0, 2);
+        setRelatedPosts(related);
+
+        setError("");
+      } catch {
+        setError("Failed to load");
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [id, subId, postId]);
 
   const containerRef = useRef(null);
+
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"],
@@ -56,8 +112,25 @@ export default function ServicePostPage({ params }: { params: Promise<{ id: stri
     }
   };
 
+  if (loading) {
+    return (
+      <main ref={containerRef} className="bg-[#f7f9fc] min-h-screen flex items-center justify-center text-black">
+        <p className="text-gray-500">Loading...</p>
+      </main>
+    );
+  }
+
+  if (error || !service || !subCategory || !post) {
+    return (
+      <main ref={containerRef} className="bg-[#f7f9fc] min-h-screen flex flex-col items-center justify-center text-black">
+        <Nav />
+        <p className="mt-10 text-gray-500">This service post could not be found.</p>
+      </main>
+    );
+  }
+
   return (
-    <main ref={containerRef} className="bg-white min-h-screen text-black selection:bg-orange-500/30 overflow-hidden relative">
+    <main ref={containerRef} className="bg-[#f7f9fc] min-h-screen text-black selection:bg-orange-500/30 overflow-hidden relative">
       <Nav />
 
       {/* Hero Section - Full Screen & Immersive */}
@@ -161,7 +234,7 @@ export default function ServicePostPage({ params }: { params: Promise<{ id: stri
       </section>
 
       {/* Detailed Content Sections */}
-      <section className="py-24 md:py-32 px-6 md:px-12 w-full max-w-[95%] mx-auto">
+      <section className="py-24 md:py-32 px-6 md:px-12 w-full max-w-[95%] mx-auto bg-white rounded-[3rem] shadow-lg">
         {/* Overview */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start mb-32">
             <div className="lg:col-span-4 sticky top-32">

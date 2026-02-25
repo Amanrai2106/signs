@@ -18,7 +18,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     const body = await req.json();
     const { key, title, image } = body ?? {};
     if (!key || !title || !image) return NextResponse.json({ ok: false, error: "Missing fields" }, { status: 400 });
-    const created = await prisma.serviceSubCategory.create({
+    const created = await (prisma as any)["serviceSubCategory"].create({
       data: { key, title, image, serviceId: id },
     });
     return NextResponse.json({ ok: true, item: created });

@@ -1,14 +1,34 @@
 "use client";
-import React, { use } from "react";
-import { services } from "@/data/services";
-import { posts } from "@/data/posts";
-import { notFound } from "next/navigation";
+import React, { use, useEffect, useState } from "react";
 import Image from "next/image";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
+import GetInTouch from "@/components/GetInTouch";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import TransitionLink from "@/components/TransitionLink";
+
+type ServiceSubCategory = { id: string; title: string; image: string };
+
+type Service = {
+  id: number;
+  title: string;
+  description: string;
+  subCategories?: ServiceSubCategory[];
+};
+
+type Post = {
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  categoryId: string;
+  subCategoryId: string;
+  type: "project" | "service";
+};
+
+import { posts as staticPosts } from "@/data/posts";
+import { services as staticServices } from "@/data/services";
 
 export default function ServiceSubCategoryPage({
   params,
@@ -16,15 +36,68 @@ export default function ServiceSubCategoryPage({
   params: Promise<{ id: string; subId: string }>;
 }) {
   const { id, subId } = use(params);
-  const service = services.find((s) => s.id === Number(id));
-  const subCategory = service?.subCategories?.find((s) => s.id === subId);
+  const [service, setService] = useState<Service | null>(null);
+  const [subCategory, setSubCategory] = useState<ServiceSubCategory | null>(null);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  if (!service || !subCategory) {
-    notFound();
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setLoading(true);
+        const fromStatic = staticServices.find((s) => s.id === Number(id)) as any | undefined;
+        if (!fromStatic) {
+          setError("Service not found");
+          setLoading(false);
+          return;
+        }
+
+        const s = fromStatic;
+        const mappedService: Service = {
+          id: s.id,
+          title: s.title,
+          description: s.description,
+          subCategories: s.subCategories || [],
+        };
+        setService(mappedService);
+        const foundSub = mappedService.subCategories?.find((sc) => sc.id === subId) || null;
+        setSubCategory(foundSub);
+
+        const allPosts = (staticPosts as Post[]).filter(
+          (p) => p.type === "service" && p.categoryId === String(id)
+        );
+        setPosts(allPosts);
+
+        setError("");
+      } catch {
+        setError("Failed to load");
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [id, subId]);
+
+  if (loading) {
+    return (
+      <main className="bg-[#f7f9fc] min-h-screen flex items-center justify-center text-black">
+        <p className="text-gray-500">Loading...</p>
+      </main>
+    );
+  }
+
+  if (error || !service || !subCategory) {
+    return (
+      <main className="bg-[#f7f9fc] min-h-screen flex flex-col items-center justify-center text-black">
+        <Nav />
+        <p className="mt-10 text-gray-500">This service category could not be found.</p>
+      </main>
+    );
   }
 
   const subCategoryPosts = posts.filter(
-    (p) => p.categoryId === id && p.subCategoryId === subId
+    (p) => p.type === "service" && p.categoryId === String(service.id) && p.subCategoryId === subId
   );
 
   const layoutSpans = [
@@ -40,7 +113,7 @@ export default function ServiceSubCategoryPage({
   ];
 
   return (
-    <main className="bg-white min-h-screen text-black selection:bg-orange-500/30">
+    <main className="bg-[#f7f9fc] min-h-screen text-black selection:bg-orange-500/30">
       <Nav />
       
       {/* Header */}
@@ -118,6 +191,7 @@ export default function ServiceSubCategoryPage({
           )}
         </div>
       </section>
+      <GetInTouch />
       <Footer />
     </main>
   );

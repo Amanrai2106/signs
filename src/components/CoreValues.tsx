@@ -1,15 +1,33 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { services } from "@/data/services";
+import { services as staticServices } from "@/data/services";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
 const CoreValues = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [radius, setRadius] = useState(400);
+  const [remoteServices, setRemoteServices] = useState<any[]>([]);
 
-  React.useEffect(() => {
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch("/api/services", { cache: "no-store" });
+        const data = await res.json();
+        if (res.ok && data?.ok && Array.isArray(data.items)) {
+          setRemoteServices(data.items);
+        }
+      } catch {}
+    };
+    load();
+  }, []);
+
+  const services = useMemo(() => {
+    return remoteServices.length > 0 ? remoteServices : staticServices;
+  }, [remoteServices]);
+
+  useEffect(() => {
     const handleResize = () => {
       setRadius(window.innerWidth < 768 ? 200 : 400);
     };

@@ -1,0 +1,62 @@
+[
+  {
+    "id": "c",
+    "title": "cv",
+    "slug": "c",
+    "excerpt": "dfcgvh",
+    "cover": "/uploads/1772057656290-Screenshot__1025_.png",
+    "category": "Education",
+    "tags": [],
+    "content": "dxcvbn\n          \n          <p><br></p>",
+    "status": "published",
+    "featured": false,
+    "createdAt": "2026-02-25T22:14:18.315Z",
+    "updatedAt": "2026-02-25T22:14:18.315Z"
+  },
+  {
+    "id": "j",
+    "title": "jhsdfghj",
+    "slug": "j",
+    "excerpt": "fghjk",
+    "cover": "/uploads/1772057483471-Screenshot__1025_.png",
+    "category": "Education",
+    "tags": [],
+    "content": "aszdxfcgvhbjnkml,sdfghjkml,rdfgvhbjnkml<div>\n          <div class=\"editor-block-image group relative my-12\" contenteditable=\"false\">\n            <img src=\"/uploads/1772057400986-Screenshot__1023_.png\" id=\"img-1772057400999\" class=\"rounded-2xl w-full h-auto shadow-2xl transition-all\" style=\"display: block; margin: 0 auto;\">\n            <div class=\"absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all z-10\">\n              <button onclick=\"event.preventDefault(); event.stopPropagation(); document.getElementById('img-1772057400999').style.width='50%'\" class=\"bg-white/90 backdrop-blur p-2 rounded-lg text-xs font-bold shadow-xl hover:bg-orange-500 hover:text-white\">50%</button>\n              <button onclick=\"event.preventDefault(); event.stopPropagation(); document.getElementById('img-1772057400999').style.width='100%'\" class=\"bg-white/90 backdrop-blur p-2 rounded-lg text-xs font-bold shadow-xl hover:bg-orange-500 hover:text-white\">100%</button>\n            </div>\n          </div>\n          <p><img src=\"http://localhost:3000/uploads/1772057400986-Screenshot__1023_.png\" id=\"img-1772057400999\" class=\"rounded-2xl w-full h-auto shadow-2xl transition-all\" style=\"margin-right: auto; margin-left: auto;\"></p>\n        <br></div>",
+    "status": "draft",
+    "featured": false,
+    "createdAt": "2026-02-25T22:11:29.361Z",
+    "updatedAt": "2026-02-25T22:11:29.361Z"
+  },
+  {
+    "id": "g",
+    "title": "gv",
+    "slug": "g",
+    "excerpt": "asxx",
+    "cover": "/uploads/1772055135616-Screenshot__1024_.png",
+    "category": "Education",
+    "tags": [
+      "Wayfinding"
+    ],
+    "content": "asx",
+    "status": "published",
+    "featured": false,
+    "createdAt": "2026-02-25T21:32:18.357Z",
+    "updatedAt": "2026-02-25T21:32:18.357Z"
+  },
+  {
+    "id": "h",
+    "title": "DF",
+    "slug": "h",
+    "excerpt": "HAX",
+    "cover": "/uploads/1771870512333-Screenshot__1023_.png",
+    "category": "Education",
+    "tags": [
+      "Wayfinding"
+    ],
+    "content": "<b>frtfjg</b>",
+    "status": "draft",
+    "featured": true,
+    "createdAt": "2026-02-23T18:15:30.835Z",
+    "updatedAt": "2026-02-23T19:49:28.182Z"
+  }
+]

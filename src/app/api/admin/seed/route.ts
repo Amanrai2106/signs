@@ -28,8 +28,8 @@ export async function POST(req: Request) {
         data: {
           title: s.title,
           description: s.description,
-          details: s.details ?? [],
-          relatedProjectIds: s.relatedProjectIds ?? [],
+          details: s.details ? JSON.stringify(s.details) : null,
+          relatedProjectIds: s.relatedProjectIds ? JSON.stringify(s.relatedProjectIds) : null,
         },
       });
       for (const sc of s.subCategories ?? []) {
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
           description: p.description,
           src: p.src,
           color: p.color ?? null,
-          relatedServiceIds: p.relatedServiceIds ?? [],
+          relatedServiceIds: p.relatedServiceIds ? JSON.stringify(p.relatedServiceIds) : null,
         },
       });
       for (const sc of p.subCategories ?? []) {

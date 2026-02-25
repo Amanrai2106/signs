@@ -2,7 +2,7 @@ export const services = [
   {
     id: 1,
     title: "Wayfinding Design",
-    description: "Clear, accessible systems that guide people through spaces with confidence and ease.",
+    description: "Human‑centred navigation for campuses, hospitals and large sites.\nUnified maps, directories and signs with consistent type and icons.\nBuilt‑in accessibility with tactile, Braille and high‑contrast cues.\nDigital touchpoints and smart placement keep people moving confidently.\nFrom strategy to install, complete sign families delivered end‑to‑end.",
     details: [
       "Directional & Wayfinding Systems",
       "Lobby & Reception Branding",
@@ -21,7 +21,7 @@ export const services = [
   {
     id: 2,
     title: "Experiential Design",
-    description: "Immersive brand experiences across retail, events and workplaces that engage and inspire.",
+    description: "Immersive brand moments across retail, events and workplaces.\nStory‑led environments shape journeys through graphics, materials and light.\nModular systems support quick campaigns and lasting brand zones.\nInteractive and digital surfaces turn visitors into participants.\nConcept to deployment—design, prototyping, production and rollout.",
     details: [
       "Retail Displays & POP",
       "Exhibits & Events",
@@ -40,7 +40,7 @@ export const services = [
   {
     id: 3,
     title: "Art Installations",
-    description: "Public art, murals and sculptural installations that elevate spaces and spark emotion.",
+    description: "Signature public art that transforms spaces and sparks emotion.\nSculptures, murals and site‑specific works tailored to context.\nArtist, engineering and fabrication collaboration from start to finish.\nMaterials and finishes chosen for safety, durability and upkeep.\nPermits, logistics and installation managed smoothly on site.",
     details: [
       "Public Art & Sculptures",
       "Murals & Supergraphics",

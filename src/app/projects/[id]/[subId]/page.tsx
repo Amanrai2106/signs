@@ -1,26 +1,98 @@
 "use client";
-import React, { use } from "react";
-import { projects } from "@/data/projects";
-import { posts } from "@/data/posts";
-import { notFound } from "next/navigation";
+import React, { use, useEffect, useState } from "react";
 import Image from "next/image";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
+import GetInTouch from "@/components/GetInTouch";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import TransitionLink from "@/components/TransitionLink";
+import { posts as staticPosts } from "@/data/posts";
+import { projects as staticProjects } from "@/data/projects";
+
+type ProjectSubCategory = { id: string; title: string; image: string };
+
+type Project = {
+  id: string;
+  title: string;
+  description: string;
+  subCategories?: ProjectSubCategory[];
+};
+
+type Post = {
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  categoryId: string;
+  subCategoryId: string;
+  type: "project" | "service";
+};
 
 export default function SubCategoryPage({ params }: { params: Promise<{ id: string; subId: string }> }) {
   const { id, subId } = use(params);
-  const project = projects.find((p) => p.id === id);
-  const subCategory = project?.subCategories?.find((s) => s.id === subId);
+  const [project, setProject] = useState<Project | null>(null);
+  const [subCategory, setSubCategory] = useState<ProjectSubCategory | null>(null);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  if (!project || !subCategory) {
-    notFound();
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setLoading(true);
+        const fromStatic = staticProjects.find((p) => p.id === id) as any | undefined;
+        if (!fromStatic) {
+          setError("Project not found");
+          setLoading(false);
+          return;
+        }
+
+        const p = fromStatic;
+        const mappedProject: Project = {
+          id: p.id,
+          title: p.title,
+          description: p.description,
+          subCategories: p.subCategories || [],
+        };
+        setProject(mappedProject);
+        const foundSub = mappedProject.subCategories?.find((sc) => sc.id === subId) || null;
+        setSubCategory(foundSub);
+
+        const allPosts = (staticPosts as Post[]).filter(
+          (pp) => pp.type === "project" && pp.categoryId === id
+        );
+        setPosts(allPosts);
+
+        setError("");
+      } catch {
+        setError("Failed to load");
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [id, subId]);
+
+  if (loading) {
+    return (
+      <main className="bg-[#f7f9fc] min-h-screen flex items-center justify-center text-black">
+        <p className="text-gray-500">Loading...</p>
+      </main>
+    );
+  }
+
+  if (error || !project || !subCategory) {
+    return (
+      <main className="bg-[#f7f9fc] min-h-screen flex flex-col items-center justify-center text-black">
+        <Nav />
+        <p className="mt-10 text-gray-500">This project category could not be found.</p>
+      </main>
+    );
   }
 
   const subCategoryPosts = posts.filter(
-    (p) => p.categoryId === id && p.subCategoryId === subId
+    (p) => p.type === "project" && p.categoryId === project.id && p.subCategoryId === subId
   );
 
   const layoutSpans = [
@@ -36,7 +108,7 @@ export default function SubCategoryPage({ params }: { params: Promise<{ id: stri
   ];
 
   return (
-    <main className="bg-white min-h-screen text-black selection:bg-orange-500/30">
+    <main className="bg-[#f7f9fc] min-h-screen text-black selection:bg-orange-500/30">
       <Nav />
       
       {/* Header */}
@@ -114,6 +186,7 @@ export default function SubCategoryPage({ params }: { params: Promise<{ id: stri
           )}
         </div>
       </section>
+      <GetInTouch />
       <Footer />
     </main>
   );
