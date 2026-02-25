@@ -68,7 +68,7 @@ export async function PATCH(req: Request) {
     if (typeof id !== "number" || typeof contacted !== "boolean") {
       return NextResponse.json({ error: "Invalid data" }, { status: 400 });
     }
-    const updated = await prisma.contactSubmission.update({
+    const updated = await (prisma.contactSubmission as any).update({
       where: { id },
       data: { contacted },
     });
