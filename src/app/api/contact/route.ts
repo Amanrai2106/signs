@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     }
 
     console.log("Creating database record...");
-    const created = await prisma.contactSubmission.create({
+    const created = await (prisma as any).contactSubmission.create({
       data: {
         name,
         email,
@@ -51,7 +51,7 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const takeParam = url.searchParams.get("take");
     const take = Math.min(Math.max(Number(takeParam || 5), 1), 100);
-    const latest = await prisma.contactSubmission.findMany({
+    const latest = await (prisma as any).contactSubmission.findMany({
       orderBy: { createdAt: "desc" },
       take,
     });
@@ -64,11 +64,15 @@ export async function GET(req: Request) {
 export async function PATCH(req: Request) {
   try {
     const body = await req.json();
-    const { id, contacted } = body ?? {};
-    if (typeof id !== "number" || typeof contacted !== "boolean") {
+    let { id, contacted } = body ?? {};
+    
+    // Convert ID to number if it's a string
+    if (typeof id === "string") id = Number(id);
+
+    if (typeof id !== "number" || isNaN(id) || typeof contacted !== "boolean") {
       return NextResponse.json({ error: "Invalid data" }, { status: 400 });
     }
-    const updated = await (prisma.contactSubmission as any).update({
+    const updated = await (prisma as any).contactSubmission.update({
       where: { id },
       data: { contacted },
     });
