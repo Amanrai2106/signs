@@ -63,19 +63,16 @@ export default function EditPostPage() {
 
     setUploading(true);
     try {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64 = reader.result as string;
-        const res = await fetch("/api/uploads", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ filename: file.name, data: base64 }),
-        });
-        const data = await res.json();
-        if (data.ok) callback(data.url);
-        else alert("Upload failed");
-      };
-      reader.readAsDataURL(file);
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/uploads", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.ok) callback(data.url);
+      else alert("Upload failed: " + (data.error || "Unknown error"));
     } catch {
       alert("Error uploading file");
     } finally {
