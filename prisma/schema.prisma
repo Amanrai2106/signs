@@ -92,3 +92,19 @@ model Post {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
+
+model News {
+  id        String   @id
+  title     String
+  slug      String   @unique
+  excerpt   String
+  cover     String
+  category  String
+  tags      String?  // JSON string
+  topic     String?  @default("none")
+  content   String   // HTML
+  status    String   @default("published")
+  featured  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

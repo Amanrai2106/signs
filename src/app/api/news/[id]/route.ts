@@ -1,21 +1,23 @@
 import { NextResponse } from "next/server";
-import { readFile, writeFile } from "fs/promises";
-import path from "path";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
-
-const storePath = path.join(process.cwd(), "src", "data", "news.store.json");
 
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const raw = await readFile(storePath, "utf-8").catch(() => "[]");
-    const items = JSON.parse(raw || "[]") as any[];
-    const found = items.find((i) => i.id === id || i.slug === id);
-    if (!found) return NextResponse.json({ ok: false }, { status: 404 });
-    return NextResponse.json({ ok: true, item: found });
-  } catch {
-    return NextResponse.json({ ok: false }, { status: 500 });
+    const item = await (prisma as any).news.findFirst({
+      where: {
+        OR: [
+          { id: id },
+          { slug: id }
+        ]
+      }
+    });
+    if (!item) return NextResponse.json({ ok: false }, { status: 404 });
+    return NextResponse.json({ ok: true, item });
+  } catch (error: any) {
+    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   }
 }
 
@@ -35,16 +37,14 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const { id } = await params;
     if (!isAuthed(req)) return NextResponse.json({ ok: false }, { status: 401 });
     const body = await req.json();
-    const raw = await readFile(storePath, "utf-8").catch(() => "[]");
-    const items = JSON.parse(raw || "[]") as any[];
-    const idx = items.findIndex((i) => i.id === id || i.slug === id);
-    if (idx === -1) return NextResponse.json({ ok: false }, { status: 404 });
-    const now = new Date().toISOString();
-    items[idx] = { ...items[idx], ...body, updatedAt: now };
-    await writeFile(storePath, JSON.stringify(items, null, 2), "utf-8");
-    return NextResponse.json({ ok: true, item: items[idx] });
-  } catch {
-    return NextResponse.json({ ok: false }, { status: 500 });
+    
+    const updated = await (prisma as any).news.update({
+      where: { id },
+      data: body,
+    });
+    return NextResponse.json({ ok: true, item: updated });
+  } catch (error: any) {
+    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   }
 }
 
@@ -52,12 +52,11 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
   try {
     const { id } = await params;
     if (!isAuthed(req)) return NextResponse.json({ ok: false }, { status: 401 });
-    const raw = await readFile(storePath, "utf-8").catch(() => "[]");
-    const items = JSON.parse(raw || "[]") as any[];
-    const filtered = items.filter((i: any) => !(i.id === id || i.slug === id));
-    await writeFile(storePath, JSON.stringify(filtered, null, 2), "utf-8");
+    await (prisma as any).news.delete({
+      where: { id },
+    });
     return NextResponse.json({ ok: true });
-  } catch {
-    return NextResponse.json({ ok: false }, { status: 500 });
+  } catch (error: any) {
+    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   }
 }
