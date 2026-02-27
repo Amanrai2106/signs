@@ -20,6 +20,7 @@ const slides = [
 
 const Hero = () => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
@@ -27,6 +28,14 @@ const Hero = () => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 3000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.play().catch((error) => {
+        console.log("Autoplay failed:", error);
+      });
+    }
   }, []);
 
   return (
@@ -38,13 +47,17 @@ const Hero = () => {
       {/* Background Video */}
       <div className="absolute inset-0 w-full h-full -z-10">
         <video
+          ref={videoRef}
           autoPlay
           loop
           muted
           playsInline
+          webkit-playsinline="true"
+          preload="auto"
           className="w-full h-full object-cover block"
         >
           <source src="/bg.mp4" type="video/mp4" />
+          Your browser does not support the video tag.
         </video>
         {/* Overlay to ensure text readability if needed, or just dark bg fallback */}
         <div className="absolute inset-0 bg-black/10" />
