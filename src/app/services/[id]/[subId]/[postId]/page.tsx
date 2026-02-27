@@ -58,13 +58,35 @@ export default function ServicePostPage({ params }: { params: Promise<{ id: stri
         const foundSub = mappedService.subCategories?.find((sc) => sc.id === subId) || null;
         setSubCategory(foundSub);
 
-        const allPosts = (staticPosts as Post[]).filter(
-          (p) => p.type === "service" && p.categoryId === String(id)
-        );
-        const current =
-          allPosts.find(
-            (p) => p.id === postId && p.categoryId === String(id) && p.subCategoryId === subId
-          ) || null;
+        // 1. Try fetching post from API first
+        let currentPost: Post | null = null;
+        try {
+          const res = await fetch(`/api/posts/${postId}`, { cache: "no-store" });
+          const data = await res.json();
+          if (res.ok && data?.ok) {
+            currentPost = data.item;
+          }
+        } catch {}
+
+        // 2. Load all posts to find related ones from database too
+        let dbPosts: Post[] = [];
+        try {
+          const res = await fetch("/api/posts", { cache: "no-store" });
+          const data = await res.json();
+          if (res.ok && data?.ok) {
+            dbPosts = (data.items || []).filter((p: any) => p.type === "service" && p.categoryId === String(id));
+          }
+        } catch {}
+
+        // Combine static and db posts
+        const allPosts = [...dbPosts];
+        (staticPosts as Post[]).filter((p) => p.type === "service" && p.categoryId === String(id)).forEach(sp => {
+          if (!allPosts.find(ap => ap.id === sp.id)) {
+            allPosts.push(sp);
+          }
+        });
+
+        const current = currentPost || allPosts.find((p) => p.id === postId) || null;
         setPost(current);
         const related = allPosts
           .filter((p) => p.subCategoryId === subId && p.id !== postId)

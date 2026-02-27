@@ -112,9 +112,24 @@ export default function ProjectPostPage({ params }: { params: Promise<{ id: stri
           }
         }
 
-        const allPosts = (staticPosts as Post[]).filter((pp) => pp.type === "project");
-        
-        // If not from API, use static
+        // 2. Load all posts to find related ones from database too
+        let dbPosts: Post[] = [];
+        try {
+          const res = await fetch("/api/posts", { cache: "no-store" });
+          const data = await res.json();
+          if (res.ok && data?.ok) {
+            dbPosts = (data.items || []).filter((p: any) => p.type === "project");
+          }
+        } catch {}
+
+        // Combine static and db posts
+        const allPosts = [...dbPosts];
+        (staticPosts as Post[]).filter((pp) => pp.type === "project").forEach(sp => {
+          if (!allPosts.find(ap => ap.id === sp.id)) {
+            allPosts.push(sp);
+          }
+        });
+
         if (!currentPost) {
           currentPost = allPosts.find(
             (pp) => pp.id === postId && pp.categoryId === id && pp.subCategoryId === subId

@@ -59,9 +59,23 @@ export default function SubCategoryPage({ params }: { params: Promise<{ id: stri
         const foundSub = mappedProject.subCategories?.find((sc) => sc.id === subId) || null;
         setSubCategory(foundSub);
 
-        const allPosts = (staticPosts as Post[]).filter(
-          (pp) => pp.type === "project" && pp.categoryId === id
-        );
+        // Fetch all posts including remote ones
+        let dbPosts: Post[] = [];
+        try {
+          const res = await fetch("/api/posts", { cache: "no-store" });
+          const data = await res.json();
+          if (res.ok && data?.ok) {
+            dbPosts = (data.items || []).filter((p: any) => p.type === "project" && p.categoryId === id);
+          }
+        } catch {}
+
+        const allPosts = [...dbPosts];
+        (staticPosts as Post[]).filter((pp) => pp.type === "project" && pp.categoryId === id).forEach(sp => {
+          if (!allPosts.find(ap => ap.id === sp.id)) {
+            allPosts.push(sp);
+          }
+        });
+        
         setPosts(allPosts);
 
         setError("");

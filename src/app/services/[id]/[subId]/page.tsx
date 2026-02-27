@@ -64,9 +64,23 @@ export default function ServiceSubCategoryPage({
         const foundSub = mappedService.subCategories?.find((sc) => sc.id === subId) || null;
         setSubCategory(foundSub);
 
-        const allPosts = (staticPosts as Post[]).filter(
-          (p) => p.type === "service" && p.categoryId === String(id)
-        );
+        // Fetch all posts including remote ones
+        let dbPosts: Post[] = [];
+        try {
+          const res = await fetch("/api/posts", { cache: "no-store" });
+          const data = await res.json();
+          if (res.ok && data?.ok) {
+            dbPosts = (data.items || []).filter((p: any) => p.type === "service" && p.categoryId === String(id));
+          }
+        } catch {}
+
+        const allPosts = [...dbPosts];
+        (staticPosts as Post[]).filter((p) => p.type === "service" && p.categoryId === String(id)).forEach(sp => {
+          if (!allPosts.find(ap => ap.id === sp.id)) {
+            allPosts.push(sp);
+          }
+        });
+
         setPosts(allPosts);
 
         setError("");

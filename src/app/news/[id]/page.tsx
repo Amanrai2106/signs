@@ -13,11 +13,13 @@ export default function ArticlePage() {
   const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
   const post = useMemo(() => posts.find((p) => p.id === id), [id]);
   const [remote, setRemote] = useState<any | null>(null);
+  const [allNews, setAllNews] = useState<any[]>([]);
 
   useEffect(() => {
     const load = async () => {
       if (!id) return;
       try {
+        // 1. Load the specific article
         const res = await fetch(`/api/news/${id}`, { cache: "no-store" });
         if (res.ok) {
           const json = await res.json();
@@ -36,11 +38,24 @@ export default function ArticlePage() {
               image: n.cover,
               date: new Date(n.createdAt).toLocaleDateString(),
               reading: "5 min read",
-              type: "news",
+              type: n.type || "news",
               category: n.category,
               tags: parsedTags,
               content: n.content || "",
             });
+          }
+        }
+
+        // 2. Load all news for "Related" section
+        const listRes = await fetch("/api/news", { cache: "no-store" });
+        if (listRes.ok) {
+          const listJson = await listRes.json();
+          if (listJson?.ok) {
+            const mapped = (listJson.items || []).map((n: any) => ({
+              ...n,
+              image: n.cover, // Map cover to image for frontend consistency
+            }));
+            setAllNews(mapped);
           }
         }
       } catch {}
@@ -48,9 +63,25 @@ export default function ArticlePage() {
     load();
   }, [id]);
 
+  const effectivePosts = useMemo(() => {
+    const combined = [...allNews];
+    posts.forEach(sp => {
+      if (!combined.find(cp => cp.id === sp.id)) {
+        combined.push(sp);
+      }
+    });
+    return combined;
+  }, [allNews]);
+
+  const currentPost = remote ?? post;
+
   const related = useMemo(
-    () => posts.filter((p) => p.id !== post?.id && (p.category === post?.category || p.type === post?.type)).slice(0, 3),
-    [post]
+    () => effectivePosts.filter((p) => 
+      p.id !== currentPost?.id && 
+      p.status !== 'draft' &&
+      (p.category === currentPost?.category || p.type === currentPost?.type)
+    ).slice(0, 3),
+    [currentPost, effectivePosts]
   );
 
   return (
