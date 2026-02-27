@@ -87,16 +87,35 @@ const Loader = () => {
       </div>
 
       <div className="relative z-10 flex h-full w-full items-center justify-center">
-        <span className="text-4xl md:text-6xl font-bold tracking-[0.25em] uppercase text-black">
-          {title.split("").map((char, index) => (
-            <span
-              key={index}
-              className="loader-char inline-block translate-y-full"
-            >
-              {char === " " ? "\u00A0" : char}
+        <div className="flex flex-col items-center gap-2 md:gap-4 text-center">
+          {/* SIGNSOL */}
+          <div className="overflow-hidden">
+            <span className="text-5xl md:text-8xl font-bold tracking-[0.3em] uppercase text-black flex">
+              {"SIGNSOL".split("").map((char, index) => (
+                <span
+                  key={index}
+                  className="loader-char inline-block translate-y-full"
+                >
+                  {char}
+                </span>
+              ))}
             </span>
-          ))}
-        </span>
+          </div>
+          
+          {/* DESIGN */}
+          <div className="overflow-hidden">
+            <span className="text-2xl md:text-4xl font-light tracking-[0.5em] uppercase text-gray-400 flex">
+              {"DESIGN".split("").map((char, index) => (
+                <span
+                  key={index}
+                  className="loader-char inline-block translate-y-full"
+                >
+                  {char}
+                </span>
+              ))}
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );
