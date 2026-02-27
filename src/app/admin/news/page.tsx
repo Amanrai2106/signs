@@ -23,7 +23,8 @@ import {
   ChevronRight,
   MoreVertical,
   X,
-  Check
+  Check,
+  Video
 } from "lucide-react";
 
 type Category = "Education" | "Press" | "Studio" | "Media";
@@ -244,6 +245,55 @@ export default function AdminNewsEditor() {
     }
   };
 
+  const onInsertVideo = async (file: File) => {
+    try {
+      setStatus("Uploading video...");
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/uploads", {
+        method: "POST",
+        body: formData,
+      });
+      const json = await res.json();
+      if (json?.ok) {
+        const vidId = `vid-${Date.now()}`;
+        const wrapperId = `wrapper-${Date.now()}`;
+        insertHTML(`
+          <div id="${wrapperId}" class="editor-block-video group relative my-12" contenteditable="false">
+            <video 
+              src="${json.url}" 
+              id="${vidId}" 
+              class="rounded-2xl w-full h-auto shadow-2xl transition-all" 
+              autoplay 
+              loop 
+              muted 
+              playsinline
+              style="display: block; margin: 0 auto;"
+            ></video>
+            <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all z-10">
+              <button onclick="event.preventDefault(); event.stopPropagation(); document.getElementById('${vidId}').style.width='50%'" class="bg-white/90 backdrop-blur p-2 rounded-lg text-xs font-bold shadow-xl hover:bg-orange-500 hover:text-white">50%</button>
+              <button onclick="event.preventDefault(); event.stopPropagation(); document.getElementById('${vidId}').style.width='100%'" class="bg-white/90 backdrop-blur p-2 rounded-lg text-xs font-bold shadow-xl hover:bg-orange-500 hover:text-white">100%</button>
+              <button onclick="event.preventDefault(); event.stopPropagation(); if(confirm('Delete this video?')) document.getElementById('${wrapperId}').remove()" class="bg-white/90 backdrop-blur p-2 rounded-lg text-xs font-bold shadow-xl hover:bg-red-500 hover:text-white">
+                Delete
+              </button>
+            </div>
+          </div>
+          <p><br></p>
+        `);
+        setShowBlockMenu(false);
+        setStatus("Video inserted");
+        setTimeout(() => setStatus(""), 2000);
+      } else {
+        alert("Upload failed: " + (json.error || "Unknown error"));
+        setStatus("Upload failed");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error uploading video");
+      setStatus("Error");
+    }
+  };
+
   const onSave = async (overrideStatus?: "draft" | "published") => {
     const finalStatus = overrideStatus || pubStatus;
     const content = editorRef.current?.innerHTML?.trim() || "";
@@ -401,6 +451,11 @@ export default function AdminNewsEditor() {
                   <ImageIcon className="w-6 h-6 mb-2 group-hover:text-orange-600" />
                   <span className="text-[10px] font-bold uppercase">Image</span>
                   <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && onInsertImage(e.target.files[0])} />
+                </label>
+                <label className="flex flex-col items-center justify-center p-4 border border-black/5 rounded-xl hover:border-orange-500 hover:bg-orange-50 transition-all cursor-pointer group">
+                  <Video className="w-6 h-6 mb-2 group-hover:text-orange-600" />
+                  <span className="text-[10px] font-bold uppercase">Video</span>
+                  <input type="file" accept="video/*" className="hidden" onChange={(e) => e.target.files?.[0] && onInsertVideo(e.target.files[0])} />
                 </label>
               </div>
             </motion.div>
