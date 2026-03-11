@@ -349,28 +349,29 @@ const AboutGrid = () => {
 
         {/* Card 4: Pan India Presence */}
         <ScrollRotateCard
-          className="w-full min-h-screen bg-gray-50 p-8 md:p-20 border-b border-black/5 flex flex-col md:flex-row items-center justify-between gap-8 md:gap-16 relative overflow-hidden"
+          className="w-full min-h-[90vh] bg-gray-50 flex flex-col md:flex-row items-center relative overflow-hidden"
         >
-          <div className="flex-1 z-10 w-full">
-             <p className="text-[clamp(0.875rem,1.5vw,1rem)] font-bold text-gray-500 mb-6 uppercase tracking-widest">
-              Service Reach
-            </p>
-            <h3 className="text-[clamp(3rem,8vw,7rem)] font-bold mb-8 md:mb-10 leading-tight">
-              Collaborating with <br />
-              <span className="text-gray-500">top architects</span>
-            </h3>
-            <p className="text-gray-600 mb-8 md:mb-12 w-full text-[clamp(1.125rem,2vw,1.875rem)]">
-              We provide turn-key signage solutions for projects <u className="text-black decoration-gray-400">pan India</u>. From strategy to installation, we ensure your vision is executed flawlessly across any location.
-            </p>
-            <div className="inline-flex items-center gap-3 md:gap-4 px-[clamp(1.5rem,2vw,2rem)] py-[clamp(0.75rem,1vw,1rem)] bg-orange-500/10 text-orange-600 rounded-full border border-orange-500/20 text-[clamp(1rem,1.5vw,1.125rem)] font-medium">
-               <span className="w-[clamp(1.25rem,1.5vw,1.5rem)] h-[clamp(1.25rem,1.5vw,1.5rem)] rounded-full border border-orange-500/50 flex items-center justify-center">
-                   <span className="w-[clamp(0.5rem,0.75vw,0.75rem)] h-[clamp(0.5rem,0.75vw,0.75rem)] bg-orange-500 rounded-full"></span>
-               </span>
-               Nationwide Service
+          <div className="container-wide z-10 flex flex-col md:flex-row items-center justify-between gap-12 md:gap-20">
+            <div className="flex-1 max-w-3xl">
+               <p className="text-base md:text-lg font-bold text-orange-600 mb-6 uppercase tracking-[0.4em]">
+                Service Reach
+              </p>
+              <h3 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-10 leading-[0.9] tracking-tighter">
+                Collaborating with <br />
+                <span className="text-gray-300 italic">top architects</span>
+              </h3>
+              <p className="p2 text-gray-600 mb-12 max-w-2xl leading-relaxed opacity-90">
+                We provide turn-key signage solutions for projects <span className="text-black font-bold border-b-2 border-orange-500">pan India</span>. From strategy to installation, we ensure your vision is executed flawlessly across any location.
+              </p>
+              <div className="inline-flex items-center gap-4 px-8 py-4 bg-orange-500/10 text-orange-600 rounded-full border border-orange-500/20 text-lg font-bold uppercase tracking-widest">
+                 <span className="w-4 h-4 rounded-full bg-orange-500 animate-pulse shadow-[0_0_15px_rgba(249,115,22,0.5)]"></span>
+                 Nationwide Service
+              </div>
             </div>
-          </div>
-          <div className="flex-1 w-full h-full absolute right-0 top-0 md:relative md:w-auto md:h-auto opacity-20 md:opacity-100 pointer-events-none scale-125 md:scale-150 origin-right">
-             <MapVisualization />
+            
+            <div className="flex-1 w-full md:w-auto h-[400px] md:h-[600px] relative opacity-40 md:opacity-100 pointer-events-none scale-110 md:scale-125">
+               <MapVisualization />
+            </div>
           </div>
         </ScrollRotateCard>
       </div>

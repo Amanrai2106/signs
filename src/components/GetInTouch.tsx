@@ -38,19 +38,19 @@ const GetInTouch = () => {
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.1 }}
-                className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[0.9] mb-8"
+                className="text-6xl md:text-8xl lg:text-[9rem] font-black tracking-tighter leading-[0.85] mb-10 !text-white"
             >
               Have a project <br/>
-              <span className="text-gray-500">in mind?</span>
+              <span className="text-white/60 italic">in mind?</span>
             </motion.h2>
 
             <motion.p 
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
-                className="text-xl text-gray-400 max-w-xl leading-relaxed"
+                className="p2 !text-gray-300 max-w-2xl leading-relaxed"
             >
-              Let&apos;s collaborate to build something exceptional. We help ambitious brands define their physical presence.
+              Let&apos;s collaborate to build something exceptional. We help ambitious brands define their physical presence with precision and style.
             </motion.p>
           </div>
 

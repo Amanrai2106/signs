@@ -38,15 +38,15 @@ const ProjectGrid = () => {
   ];
 
   return (
-    <section id="project-grid" className="bg-white">
-      <div className="container-wide">
+    <section id="project-grid" className="bg-white min-h-screen flex flex-col justify-center py-20">
+      <div className="container-wide w-full">
         <div className="flex flex-col items-center mb-24 text-center">
-          <div className="max-w-4xl">
+          <div className="max-w-5xl w-full">
             <motion.p 
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="text-sm md:text-base font-bold tracking-[0.4em] uppercase text-orange-600 mb-6"
+              className="text-base md:text-lg font-bold tracking-[0.5em] uppercase text-orange-600 mb-8"
             >
               Our Portfolio
             </motion.p>
@@ -54,17 +54,17 @@ const ProjectGrid = () => {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="text-5xl md:text-7xl lg:text-8xl leading-[0.9] mb-10 whitespace-nowrap"
+              className="text-6xl md:text-8xl lg:text-[10rem] leading-[0.85] mb-12 font-black tracking-tighter whitespace-nowrap"
             >
               CRAFTING DIGITAL <br />
-              <span className="text-gray-300 italic">EXCELLENCE</span>
+              <span className="text-gray-200 italic">EXCELLENCE</span>
             </motion.h2>
             <motion.p 
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className="p2 text-gray-500 leading-relaxed max-w-2xl mx-auto"
+              className="p2 text-gray-400 leading-relaxed max-w-3xl mx-auto opacity-80"
             >
               We blend innovation with precision to transform spaces through 
               thoughtful wayfinding and high-impact design solutions.
@@ -72,7 +72,7 @@ const ProjectGrid = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 auto-rows-[280px] md:auto-rows-[320px] lg:auto-rows-[350px] gap-6 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 auto-rows-[300px] md:auto-rows-[350px] lg:auto-rows-[400px] gap-8 mb-20">
           {gridPosts.map((post, idx) => (
             <motion.div
               key={post.id}
