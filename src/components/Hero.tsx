@@ -74,7 +74,7 @@ const Hero = () => {
             transition={{ duration: 0.8, ease: "easeOut" }}
             className="flex flex-col gap-2 md:gap-4"
           >
-            <h1 className="text-3xl sm:text-4xl md:text-8xl lg:text-9xl font-bold leading-none tracking-tighter break-words text-white uppercase">
+            <h1 className="text-4xl sm:text-6xl md:text-8xl lg:text-[10rem] font-bold leading-none tracking-tighter break-words text-white uppercase whitespace-nowrap overflow-hidden text-ellipsis">
               {slides[currentSlide].title}
             </h1>
             <p className="text-base sm:text-lg md:text-3xl text-gray-200 font-light max-w-2xl">

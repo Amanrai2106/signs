@@ -38,79 +38,83 @@ const ProjectGrid = () => {
   ];
 
   return (
-    <section id="project-grid" className="py-24 bg-white px-[5px] overflow-hidden">
-      <div className="w-full max-w-none mx-auto text-center">
-        <div className="flex flex-col items-center mb-16 gap-8">
-          <div className="max-w-3xl">
+    <section id="project-grid" className="bg-white">
+      <div className="container-wide">
+        <div className="flex flex-col items-center mb-24 text-center">
+          <div className="max-w-4xl">
+            <motion.p 
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-sm md:text-base font-bold tracking-[0.4em] uppercase text-orange-600 mb-6"
+            >
+              Our Portfolio
+            </motion.p>
             <motion.h2 
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="text-4xl md:text-7xl lg:text-8xl font-bold tracking-tighter text-black mb-8 leading-none"
+              className="text-5xl md:text-7xl lg:text-8xl leading-[0.9] mb-10 whitespace-nowrap"
             >
               CRAFTING DIGITAL <br />
-              <span className="text-gray-400 italic font-serif">EXCELLENCE</span>
+              <span className="text-gray-300 italic">EXCELLENCE</span>
             </motion.h2>
             <motion.p 
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className="text-xl md:text-2xl text-gray-600 leading-relaxed mx-auto max-w-2xl mb-10"
+              className="p2 text-gray-500 leading-relaxed max-w-2xl mx-auto"
             >
-              Explore our latest architectural and design projects where innovation meets precision. 
-              We transform spaces through thoughtful wayfinding.
+              We blend innovation with precision to transform spaces through 
+              thoughtful wayfinding and high-impact design solutions.
             </motion.p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 auto-rows-[220px] md:auto-rows-[260px] lg:auto-rows-[280px] gap-4 md:gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 auto-rows-[280px] md:auto-rows-[320px] lg:auto-rows-[350px] gap-6 mb-16">
           {gridPosts.map((post, idx) => (
             <motion.div
               key={post.id}
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: idx * 0.1 }}
-              className={`group relative overflow-hidden bg-gray-100 ${layoutSpans[idx] || ""}`}
+              transition={{ delay: idx * 0.05, duration: 0.8 }}
+              className={`group relative overflow-hidden rounded-2xl bg-gray-50 ${layoutSpans[idx] || ""}`}
             >
               <Image
                 src={post.image}
                 alt={post.title}
                 fill
-                className="object-cover transition-transform duration-700 group-hover:scale-110"
+                className="object-cover transition-transform duration-1000 ease-out group-hover:scale-105"
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-8">
-                <p className="text-white/60 text-sm font-medium uppercase tracking-widest mb-2 text-left">
-                  {post.subCategoryId}
-                </p>
-                <h3 className="text-white text-2xl font-bold mb-4 text-left">
-                  {post.title}
-                </h3>
-                <TransitionLink 
-                  href={`/projects/${post.categoryId}/${post.subCategoryId}/${post.id}`}
-                  className="inline-flex items-center text-white font-semibold group/link"
-                >
-                  View Case Study
-                  <div className="ml-2 w-8 h-[1px] bg-white transition-all duration-300 group-hover/link:w-12" />
-                </TransitionLink>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-10">
+                <div className="translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                  <p className="text-orange-500 text-sm font-bold uppercase tracking-[0.2em] mb-3 text-left">
+                    {post.subCategoryId}
+                  </p>
+                  <h3 className="text-white text-3xl font-bold mb-6 text-left leading-tight">
+                    {post.title}
+                  </h3>
+                  <TransitionLink 
+                    href={`/projects/${post.categoryId}/${post.subCategoryId}/${post.id}`}
+                    className="inline-flex items-center text-white text-base font-bold uppercase tracking-widest group/link"
+                  >
+                    View Case Study
+                    <span className="ml-3 w-8 h-px bg-white/50 transition-all duration-300 group-hover/link:w-12 group-hover/link:bg-white" />
+                  </TransitionLink>
+                </div>
               </div>
             </motion.div>
           ))}
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.2 }}
-          className="flex justify-end"
-        >
-          <Button href="/projects" variant="primary" className="px-8 py-3 text-base">
-            View All Work
+        <div className="flex justify-center">
+          <Button href="/projects" variant="outline" className="px-12 py-4 text-sm font-bold uppercase tracking-widest border-black/20 hover:bg-black hover:text-white transition-all">
+            View All Projects
           </Button>
-        </motion.div>
+        </div>
       </div>
     </section>
   );

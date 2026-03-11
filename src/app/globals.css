@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @font-face {
-  font-family: 'signsol';
+  font-family: 'Proxima Nova';
   src: url('/fonts/proximanova-regular.woff') format('woff');
   font-weight: 400;
   font-style: normal;
@@ -9,7 +9,7 @@
 }
 
 @font-face {
-  font-family: 'signsol';
+  font-family: 'Proxima Nova';
   src: url('/fonts/proximanova-bold.woff') format('woff');
   font-weight: 700;
   font-style: normal;
@@ -17,8 +17,10 @@
 }
 
 @theme {
-  --font-sans: "signsol", ui-sans-serif, system-ui, sans-serif,
+  --font-sans: "Proxima Nova", ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-serif: "Proxima Nova", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-mono: "Proxima Nova", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --color-background: #f7f9fc;
   --color-light: #444444;
 }
@@ -34,6 +36,9 @@ body {
   cursor: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6; /* Balanced line-height for readability */
+  letter-spacing: -0.01em; /* Slightly tighter for a professional feel */
+  color: #1a1a1a;
 }
 
 @media (max-width: 1024px) {
@@ -45,7 +50,74 @@ body {
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-sans);
+  letter-spacing: -0.04em; /* Even tighter tracking for a high-end look */
+  line-height: 1.1; /* Tighter leading for headings */
+  font-weight: 700;
+  color: #000;
+  overflow-wrap: normal; /* Prevent breaking in middle of words */
+  word-break: keep-all; /* Prevent breaking in middle of words */
+  hyphens: none;
+}
+
+h1 { 
+  font-size: clamp(2.2rem, 8vw, 5.5rem); 
+  white-space: nowrap; /* Forces one line for main title if possible */
+}
+h2 { 
+  font-size: clamp(1.8rem, 5vw, 3.5rem); 
+}
+h3 { 
+  font-size: clamp(1.4rem, 3vw, 2.25rem); 
+}
+
+/* For mobile devices where nowrap might overflow, use specific control */
+@media (max-width: 640px) {
+  h1 {
+    white-space: normal;
+    word-break: keep-all;
+  }
+}
+
+p {
+  margin-bottom: 1.5rem;
+  opacity: 0.9;
+  font-size: 1.25rem; /* Upgraded to P2/P7 style for better readability */
+  line-height: 1.6;
+}
+
+/* Custom Typography Utilities */
+.p2 {
+  font-size: 1.25rem; /* Slightly larger medium */
+  line-height: 1.6;
+}
+
+.p3 {
+  font-size: 1.125rem; /* Standard medium */
+  line-height: 1.6;
+}
+
+.p7 {
+  font-size: 1.75rem; /* Larger, professional display paragraph style */
+  line-height: 1.4;
   letter-spacing: -0.02em;
+}
+
+.text-small {
+  font-size: 0.9rem; /* For less important details */
+}
+
+/* Professional Section Spacing */
+section {
+  padding-top: clamp(5rem, 10vh, 8rem);
+  padding-bottom: clamp(5rem, 10vh, 8rem);
+}
+
+.container-wide {
+  width: 94%;
+  max-width: 1700px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 1.75rem; /* P7 Padding for professional spacing */
 }
 
 
